@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "144128793526",
+    "project_id": "chaspy-16e93",
+    "storage_bucket": "chaspy-16e93.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:144128793526:android:c2457e54493b5cfc003f17",
+        "android_client_info": {
+          "package_name": "com.example.chaspy"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAh9b2ZL6XJ_cjjLo5KwhGQX3gzem_r25w"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
