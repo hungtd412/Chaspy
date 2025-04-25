@@ -9,7 +9,7 @@ import com.google.firebase.auth.FirebaseUser;
 
 public class SignUpViewModel extends ViewModel {
 
-    private UserRepository userRepository;
+    private static UserRepository userRepository;
     private MutableLiveData<Boolean> isUserRegistered;
     private MutableLiveData<String> errorMessage;
 

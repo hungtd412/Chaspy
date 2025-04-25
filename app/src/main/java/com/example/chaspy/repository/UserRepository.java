@@ -18,6 +18,11 @@ public class UserRepository {
         return userService.registerUser(email, password);
     }
 
+    // Sign in the user
+    public Task<AuthResult> signInUser(String email, String password) {
+        return userService.signInUser(email, password);
+    }
+
     // Save user data
     public Task<Void> saveUserData(FirebaseUser firebaseUser, String firstName, String lastName) {
         return userService.saveUserData(firebaseUser, firstName, lastName);

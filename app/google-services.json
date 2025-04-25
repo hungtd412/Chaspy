@@ -1,6 +1,7 @@
 {
   "project_info": {
     "project_number": "144128793526",
+    "firebase_url": "https://chaspy-16e93-default-rtdb.firebaseio.com",
     "project_id": "chaspy-16e93",
     "storage_bucket": "chaspy-16e93.firebasestorage.app"
   },
@@ -12,7 +13,12 @@
           "package_name": "com.example.chaspy"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "144128793526-657i2qpdh3hrkb2eqmc3a8puohabjis8.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyAh9b2ZL6XJ_cjjLo5KwhGQX3gzem_r25w"
@@ -20,7 +26,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "144128793526-657i2qpdh3hrkb2eqmc3a8puohabjis8.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }
