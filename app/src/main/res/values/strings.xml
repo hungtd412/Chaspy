@@ -1,3 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Chaspy</string>
+    <string name="app_logo">Chaspy Logo</string>
+    <string name="background_image">Background Image</string>
 </resources>

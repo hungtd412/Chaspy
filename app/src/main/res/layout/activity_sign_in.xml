@@ -1,47 +1,155 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<!-- res/layout/activity_login.xml -->
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <EditText
-        android:id="@+id/emailEditText"
+    <!-- Background Image -->
+    <ImageView
         android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:contentDescription="@string/background_image"
+        android:scaleType="centerCrop"
+        android:src="@drawable/background_parrot"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <!-- Chaspy Logo - Điều chỉnh theo Figma design -->
+    <ImageView
+        android:id="@+id/iv_logo"
+        android:layout_width="200dp"
+        android:layout_height="60dp"
+        android:layout_marginTop="80dp"
+        android:contentDescription="@string/app_logo"
+        android:src="@drawable/chaspy_logo"
+        android:scaleType="fitCenter"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <!-- Email Label -->
+    <TextView
+        android:id="@+id/tv_email_label"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:hint="Email"
+        android:layout_marginStart="60dp"
+        android:layout_marginTop="180dp"
+        android:text="Email"
+        android:textColor="#FFFFFF"
+        android:textSize="18sp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/iv_logo" />
+
+    <!-- Email Input -->
+    <EditText
+        android:id="@+id/et_email"
+        android:layout_width="0dp"
+        android:layout_height="48dp"
+        android:layout_marginStart="60dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="60dp"
+        android:background="@drawable/edit_text_background"
+        android:hint="Enter your email"
         android:inputType="textEmailAddress"
-        android:layout_marginTop="100dp" />
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:textColor="#2D3748"
+        android:textColorHint="#A0AEC0"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/tv_email_label" />
 
+    <!-- Password Label -->
+    <TextView
+        android:id="@+id/tv_password_label"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="60dp"
+        android:layout_marginTop="24dp"
+        android:text="Password"
+        android:textColor="#FFFFFF"
+        android:textSize="18sp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/et_email" />
+
+    <!-- Password Input -->
     <EditText
-        android:id="@+id/passwordEditText"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:hint="Password"
+        android:id="@+id/et_password"
+        android:layout_width="0dp"
+        android:layout_height="48dp"
+        android:layout_marginStart="60dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="60dp"
+        android:background="@drawable/edit_text_background"
+        android:hint="Enter your password"
         android:inputType="textPassword"
-        android:layout_below="@id/emailEditText"
-        android:layout_marginTop="20dp" />
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:textColor="#2D3748"
+        android:textColorHint="#A0AEC0"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/tv_password_label" />
 
-    <ProgressBar
-        android:id="@+id/progressBar"
+    <!-- Forgot Password - Thêm gạch chân -->
+    <TextView
+        android:id="@+id/tv_forgot_password"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:visibility="gone"
-        android:layout_centerInParent="true" />
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="60dp"
+        android:text="Forgot password?"
+        android:textColor="#2D3748"
+        android:textSize="14sp"
+        android:textStyle="normal"
+        android:paintFlags="UNDERLINE_TEXT_FLAG"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/et_password" />
 
+    <!-- Login Button -->
     <Button
-        android:text="Sign In"
+        android:id="@+id/btn_login"
+        android:layout_width="150dp"
+        android:layout_height="48dp"
+        android:layout_marginTop="40dp"
+        android:background="@drawable/login_button_background"
+        android:text="LOGIN"
+        android:textColor="#FFFFFF"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/tv_forgot_password" />
+
+    <!-- Sign Up Text -->
+    <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:onClick="onSignInClick"
-        android:layout_below="@id/passwordEditText"
-        android:layout_marginTop="30dp" />
+        android:layout_marginTop="20dp"
+        android:orientation="horizontal"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/btn_login">
 
-    <Button
-        android:id="@+id/switchToSignUpButton"
-        android:text="Don't have an account? Sign Up"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="360dp"
-        android:layout_centerHorizontal="true"
-        android:onClick="switchToSignUpActivity" />
+        <TextView
+            android:id="@+id/tv_no_account"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Don't have any account? "
+            android:textColor="#2D3748"
+            android:textSize="16sp" />
 
-</RelativeLayout>
+        <TextView
+            android:id="@+id/tv_sign_up"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Sign up"
+            android:textColor="#E83E8C"
+            android:textSize="16sp"
+            android:textStyle="bold" />
+    </LinearLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>
