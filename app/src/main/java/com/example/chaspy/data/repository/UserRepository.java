@@ -1,6 +1,6 @@
-package com.example.chaspy.repository;
+package com.example.chaspy.data.repository;
 
-import com.example.chaspy.network.UserFirebaseService;
+import com.example.chaspy.data.service.UserFirebaseService;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.android.gms.tasks.Task;

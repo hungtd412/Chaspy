@@ -1,11 +1,9 @@
 package com.example.chaspy.ui.viewmodel;
 
 import android.text.TextUtils;
-import android.util.Patterns;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
-import com.example.chaspy.repository.UserRepository;
-import com.google.firebase.auth.AuthResult;
+import com.example.chaspy.data.repository.UserRepository;
 import com.google.firebase.auth.FirebaseUser;
 
 public class SignInViewModel extends ViewModel {
@@ -28,12 +26,18 @@ public class SignInViewModel extends ViewModel {
         return errorMessage;
     }
 
-    // Validate input fields (email and password)
-    public boolean validateInput(String email, String password) {
-        if (TextUtils.isEmpty(email) || !Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
-            errorMessage.setValue("Invalid email address.");
+    // Validate input fields (username and password)
+    public boolean validateInput(String username, String password) {
+        if (TextUtils.isEmpty(username)) {
+            errorMessage.setValue("Username cannot be empty.");
             return false;
         }
+        
+        if (username.length() < 3) {
+            errorMessage.setValue("Username must be at least 3 characters.");
+            return false;
+        }
+        
         if (TextUtils.isEmpty(password) || password.length() < 6) {
             errorMessage.setValue("Password must be at least 6 characters.");
             return false;
@@ -42,9 +46,9 @@ public class SignInViewModel extends ViewModel {
     }
 
     // Sign in the user
-    public void signInUser(String email, String password) {
-        if (validateInput(email, password)) {
-            userRepository.signInUser(email, password).addOnCompleteListener(task -> {
+    public void signInUser(String username, String password) {
+        if (validateInput(username, password)) {
+            userRepository.signInUser(username + "@gmail.com", password).addOnCompleteListener(task -> {
                 if (task.isSuccessful()) {
                     // Sign-in successful
                     FirebaseUser firebaseUser = task.getResult().getUser();

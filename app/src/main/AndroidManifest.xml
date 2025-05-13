@@ -14,26 +14,29 @@
         android:theme="@style/Theme.Chaspy"
         tools:targetApi="31">
 
-        <!-- SignupActivity -->
+        <!-- SignUpActivity -->
         <activity
-            android:name=".ui.view.SignupActivity"
-            android:exported="true" />
+            android:name=".ui.view.SignUpActivity"
+            android:exported="true">
 
-        <!-- SigninActivity (launcher) -->
+        </activity>
+
+        <!-- SignInActivity (launcher) -->
         <activity
-            android:name=".ui.view.SigninActivity"
+            android:name=".ui.view.SignInActivity"
+            android:exported="true">
+
+        </activity>
+
+        <!-- MainActivity (nếu có dùng sau login) -->
+        <activity
+            android:name=".ui.view.ConversationsActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-
-        <!-- MainActivity (nếu có dùng sau login) -->
-        <activity
-            android:name=".MainActivity"
-            android:exported="true" />
-
     </application>
 
 </manifest>
