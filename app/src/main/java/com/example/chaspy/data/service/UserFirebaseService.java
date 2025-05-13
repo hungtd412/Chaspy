@@ -8,12 +8,12 @@ import com.example.chaspy.model.User;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
-public class UserService {
+public class UserFirebaseService {
 
     private static FirebaseAuth firebaseAuth;
     private static DatabaseReference usersRef;
 
-    public UserService() {
+    public UserFirebaseService() {
         firebaseAuth = FirebaseAuth.getInstance();
         usersRef = FirebaseDatabase.getInstance().getReference("users");
     }

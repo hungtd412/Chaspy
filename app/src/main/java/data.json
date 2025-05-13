@@ -1,0 +1,106 @@
+{
+  "users": {
+    "QwXLLF863qP30xOhpNDt0zzgeLo2": {
+      "email": "fff@gmail.com",
+      "first_name": "Hung",
+      "last_name": "Tran",
+      "is_active": true,
+      "profilePicUrl": "https://vcdn1-vnexpress.vnecdn.net/2021/12/16/Ronaldo-9715-1626678656-3640-1-3558-5567-1639643535.jpg?w=460&h=0&q=100&dpr=2&fit=crop&s=9K7V2Z3m_6B48e61rjO0Lw",
+      "friends": {
+        "aU8cY9p37Sg5FbJjtf6s82JFn4l8": true,
+        "uX5k9r4b2V9G5B7jN3T9r5YzJ3H9": true
+      },
+      "block_list": {
+        "blocked_user_uid_1": true
+      }
+    },
+    "aU8cY9p37Sg5FbJjtf6s82JFn4l8": {
+      "email": "alice.smith@example.com",
+      "first_name": "Alice",
+      "last_name": "Smith",
+      "is_active": true,
+      "profilePicUrl": "https://vcdn1-vnexpress.vnecdn.net/2021/12/16/Ronaldo-9715-1626678656-3640-1-3558-5567-1639643535.jpg?w=460&h=0&q=100&dpr=2&fit=crop&s=9K7V2Z3m_6B48e61rjO0Lw",
+      "friends": {
+        "uid_123456": true
+      },
+      "block_list": {
+        "blocked_user_uid_2": true
+      }
+    },
+    "uX5k9r4b2V9G5B7jN3T9r5YzJ3H9": {
+      "email": "daotrunghieu859@gmail.com",
+      "first_name": "Hieu",
+      "last_name": "Dao",
+      "is_active": true,
+      "profilePicUrl": "https://www.fcbarcelona.com/fcbarcelona/photo/2022/08/02/ae5252d1-b79b-4950-9e34-6e67fac09bb0/LeoMessi20092010_pic_fcb-arsenal62.jpg",
+      "friends": {
+        "uid_987654": true
+      },
+      "block_list": {}
+    }
+  },
+  "conversations": {
+    "a1Xk2z3b4C5D6E7Fg8H9i10J11K12L13M14": {
+      "last_message": "Hello, how are you?",
+      "last_message_time": "1627319000000",
+      "user1_id": "QwXLLF863qP30xOhpNDt0zzgeLo2",
+      "user2_id": "aU8cY9p37Sg5FbJjtf6s82JFn4l8"
+    },
+    "b2Yk3z4C5D6E7F8G9H10i11J12K13L14M15": {
+      "last_message": "Let's meet up later.",
+      "last_message_time": "1627323000000",
+      "message_count": 3,
+      "user1_id": "QwXLLF863qP30xOhpNDt0zzgeLo2",
+      "user2_id": "aU8cY9p37Sg5FbJjtf6s82JFn4l8"
+    },
+    "c3B4D5E6F7G8H9i10J11K12L13M14N15O16": {
+      "last_message": "I'll send you the details soon.",
+      "last_message_time": "1627331000000",
+      "user1_id": "QwXLLF863qP30xOhpNDt0zzgeLo2",
+      "user2_id": "uX5k9r4b2V9G5B7jN3T9r5YzJ3H9"
+    }
+  },
+  "messages": {
+    "a1Xk2z3b4C5D6E7Fg8H9i10J11K12L13M14": {
+      "nCwV5F5h1kR7xOqF3pQmJ9L0u7YwZv8z": {
+        "sender_id": "QwXLLF863qP30xOhpNDt0zzgeLo2",
+        "message_content": "Hello, how are you?",
+        "message_type": "text",
+        "timestamp": "1627318000000",
+        "attachments": {
+          "pN8V1sW7q3XbL6yJzD9cG2R0F5aK4Tq": true
+        }
+      },
+      "ZpL9aQ8v6T3xD8rM0uV1sF5w2T3cX9Wv": {
+        "sender_id": "aU8cY9p37Sg5FbJjtf6s82JFn4l8",
+        "message_content": "I'm good, thanks!",
+        "message_type": "text",
+        "timestamp": "1627318500000"
+      }
+    },
+    "b2Yk3z4C5D6E7F8G9H10i11J12K13L14M15": {
+      "gB2h6y7V4r9P08aFqzKxW6l1iJY7zA4v": {
+        "sender_id": "QwXLLF863qP30xOhpNDt0zzgeLo2",
+        "message_content": "Let's meet up later.",
+        "message_type": "text",
+        "timestamp": "1627323000000"
+      }
+    },
+    "c3B4D5E6F7G8H9i10J11K12L13M14N15O16": {
+      "rS2gX5Dq7L9K6fH8dT0eG9uZ1vU7yY6h": {
+        "sender_id": "aU8cY9p37Sg5FbJjtf6s82JFn4l8",
+        "message_content": "I'll send you the details soon.",
+        "message_type": "text",
+        "timestamp": "1627331000000"
+      }
+    }
+  },
+  "attachments": {
+    "pN8V1sW7q3XbL6yJzD9cG2R0F5aK4Tq": {
+      "file_url": "https://example.com/file.jpg",
+      "thumb_url": "https://example.com/thumb.jpg",
+      "created_at": "1627318000000",
+      "updated_at": "1627319000000"
+    }
+  }
+}
