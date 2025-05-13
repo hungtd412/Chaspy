@@ -8,62 +8,67 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.lifecycle.ViewModelProvider;
 
 import com.example.chaspy.R;
-import com.example.chaspy.network.UserService;
-import com.google.firebase.auth.FirebaseUser;
+import com.example.chaspy.ui.viewmodel.SignInViewModel;
 
-public class SigninActivity extends AppCompatActivity {
+public class SignInActivity extends AppCompatActivity {
 
-    private EditText etEmail, etPassword;
+    private EditText etUsername, etPassword;
     private Button btnLogin;
     private TextView tvSignUp;
 
-    private UserService userService;
+    private SignInViewModel signInViewModel;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_sign_in);
 
-        // Khởi tạo UserService
-        userService = new UserService();
+        // Initialize ViewModel
+        signInViewModel = new ViewModelProvider(this).get(SignInViewModel.class);
 
-        // Liên kết UI với biến
-        etEmail = findViewById(R.id.et_email);
+        // Link UI with variables
+        etUsername = findViewById(R.id.et_email);
         etPassword = findViewById(R.id.et_password);
         btnLogin = findViewById(R.id.btn_login);
         tvSignUp = findViewById(R.id.tv_sign_up);
 
-        // Xử lý nút đăng nhập
+        // Set up observers
+        setupObservers();
+
+        // Handle login button
         btnLogin.setOnClickListener(view -> {
-            String email = etEmail.getText().toString().trim();
+            String username = etUsername.getText().toString().trim();
             String password = etPassword.getText().toString().trim();
 
-            if (email.isEmpty() || password.isEmpty()) {
-                Toast.makeText(this, "Please enter email and password", Toast.LENGTH_SHORT).show();
-                return;
-            }
-
-            userService.signInUser(email, password)
-                    .addOnCompleteListener(task -> {
-                        if (task.isSuccessful()) {
-                            FirebaseUser user = task.getResult().getUser();
-                            Toast.makeText(this, "Login successful", Toast.LENGTH_SHORT).show();
-
-                            // TODO: Chuyển sang màn hình chính hoặc dashboard
-                            // startActivity(new Intent(this, HomeActivity.class));
-                            finish();
-                        } else {
-                            Toast.makeText(this, "Login failed: " + task.getException().getMessage(), Toast.LENGTH_LONG).show();
-                        }
-                    });
+            // Use ViewModel to handle login
+            signInViewModel.signInUser(username, password);
         });
 
-        // Xử lý điều hướng đến SignUpActivity
+        // Handle navigation to SignUpActivity
         tvSignUp.setOnClickListener(view -> {
-            Intent intent = new Intent(SigninActivity.this, SignupActivity.class);
+            Intent intent = new Intent(SignInActivity.this, SignUpActivity.class);
             startActivity(intent);
+        });
+    }
+
+    private void setupObservers() {
+        // Observe login success
+        signInViewModel.getIsUserSignedIn().observe(this, isSignedIn -> {
+            if (isSignedIn) {
+                Toast.makeText(this, "Login successful", Toast.LENGTH_SHORT).show();
+                startActivity(new Intent(this, ConversationsActivity.class));
+                finish();
+            }
+        });
+
+        // Observe error messages
+        signInViewModel.getErrorMessage().observe(this, errorMsg -> {
+            if (errorMsg != null && !errorMsg.isEmpty()) {
+                Toast.makeText(this, errorMsg, Toast.LENGTH_LONG).show();
+            }
         });
     }
 }
