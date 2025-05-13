@@ -1,106 +1,176 @@
 package com.example.chaspy.data.service;
 
-import android.util.Log;
-
 import com.example.chaspy.data.model.Conversation;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.Map;
+
+import androidx.annotation.NonNull;
 
 public class ConversationFirebaseService {
-
-    private FirebaseDatabase database;
+    private final DatabaseReference conversationsRef;
+    private final DatabaseReference usersRef;
 
     public ConversationFirebaseService() {
-        database = FirebaseDatabase.getInstance();
+        FirebaseDatabase database = FirebaseDatabase.getInstance();
+        conversationsRef = database.getReference("conversations");
+        usersRef = database.getReference("users");
     }
 
-    public void getConversations(String userId, final FirebaseCallback callback) {
-        database.getReference("conversations")
-                .orderByChild("last_message_time")
-                .addListenerForSingleValueEvent(new ValueEventListener() {
-                    @Override
-                    public void onDataChange(DataSnapshot dataSnapshot) {
-                        List<DataSnapshot> matchingConversations = new ArrayList<>();
+    public void getConversations(String userId, FirebaseCallback callback) {
+        conversationsRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                List<Conversation> conversations = new ArrayList<>();
+                for (DataSnapshot conversationSnapshot : snapshot.getChildren()) {
+                    String user1Id = conversationSnapshot.child("user1_id").getValue(String.class);
+                    String user2Id = conversationSnapshot.child("user2_id").getValue(String.class);
+                    
+                    // Check if this conversation involves the current user
+                    if (userId.equals(user1Id) || userId.equals(user2Id)) {
+                        String conversationId = conversationSnapshot.getKey();
+                        String lastMessage = conversationSnapshot.child("last_message").getValue(String.class);
+                        String lastMessageTime = conversationSnapshot.child("last_message_time").getValue(String.class);
                         
-                        // First, collect all conversation snapshots that involve this user
-                        for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
-                            String user1Id = snapshot.child("user1_id").getValue(String.class);
-                            String user2Id = snapshot.child("user2_id").getValue(String.class);
-
-                            if (user1Id != null && user2Id != null &&
-                                (user1Id.equals(userId) || user2Id.equals(userId))) {
-                                matchingConversations.add(snapshot);
+                        // Determine the friend's ID (the other user in the conversation)
+                        final String friendId = userId.equals(user1Id) ? user2Id : user1Id;
+                        
+                        // Create a conversation object with temporary empty values for friend details
+                        Conversation conversation = new Conversation(
+                                conversationId,
+                                lastMessage, 
+                                lastMessageTime,
+                                friendId,
+                                "", // Temporary empty friend username
+                                "" // Temporary empty profile pic URL
+                        );
+                        
+                        conversations.add(conversation);
+                        
+                        // Fetch the friend's details from the users node
+                        usersRef.child(friendId).addListenerForSingleValueEvent(new ValueEventListener() {
+                            @Override
+                            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                                if (dataSnapshot.exists()) {
+                                    String firstName = dataSnapshot.child("first_name").getValue(String.class);
+                                    String lastName = dataSnapshot.child("last_name").getValue(String.class);
+                                    String friendUsername = firstName + " " + lastName;
+                                    String profilePicUrl = dataSnapshot.child("profilePicUrl").getValue(String.class);
+                                    
+                                    // Update the conversation with the friend's details
+                                    conversation.setFriendUsername(friendUsername);
+                                    conversation.setProfilePicUrl(profilePicUrl);
+                                    
+                                    // Notify the callback that a conversation has been updated
+                                    if (conversations.indexOf(conversation) == conversations.size() - 1) {
+                                        callback.onSuccess(conversations);
+                                    }
+                                }
+                            }
+                            
+                            @Override
+                            public void onCancelled(@NonNull DatabaseError error) {
+                                callback.onFailure(error.getMessage());
+                            }
+                        });
+                    }
+                }
+                
+                // If no conversations found, return empty list
+                if (conversations.isEmpty()) {
+                    callback.onSuccess(conversations);
+                }
+            }
+            
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                callback.onFailure(error.getMessage());
+            }
+        });
+    }
+    
+    public void getSingleConversationWithDetails(String conversationId, String currentUserId, SingleConversationCallback callback) {
+        conversationsRef.child(conversationId).addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot conversationSnapshot) {
+                if (conversationSnapshot.exists()) {
+                    String user1Id = conversationSnapshot.child("user1_id").getValue(String.class);
+                    String user2Id = conversationSnapshot.child("user2_id").getValue(String.class);
+                    String lastMessage = conversationSnapshot.child("last_message").getValue(String.class);
+                    String lastMessageTime = conversationSnapshot.child("last_message_time").getValue(String.class);
+                    
+                    // Determine friend ID
+                    String friendId = currentUserId.equals(user1Id) ? user2Id : user1Id;
+                    
+                    // Create a conversation object with temporary values
+                    Conversation conversation = new Conversation(
+                            conversationId,
+                            lastMessage,
+                            lastMessageTime,
+                            friendId,
+                            "",
+                            ""
+                    );
+                    
+                    // Get friend details
+                    usersRef.child(friendId).addListenerForSingleValueEvent(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(@NonNull DataSnapshot userSnapshot) {
+                            if (userSnapshot.exists()) {
+                                String firstName = userSnapshot.child("first_name").getValue(String.class);
+                                String lastName = userSnapshot.child("last_name").getValue(String.class);
+                                String friendUsername = firstName + " " + lastName;
+                                String profilePicUrl = userSnapshot.child("profilePicUrl").getValue(String.class);
+                                
+                                // Update the conversation with friend details
+                                conversation.setFriendUsername(friendUsername);
+                                conversation.setProfilePicUrl(profilePicUrl);
+                                
+                                callback.onSuccess(conversation);
+                            } else {
+                                callback.onFailure("User not found");
                             }
                         }
                         
-                        // If no conversations found
-                        if (matchingConversations.isEmpty()) {
-                            callback.onSuccess(new ArrayList<>());
-                            return;
+                        @Override
+                        public void onCancelled(@NonNull DatabaseError error) {
+                            callback.onFailure(error.getMessage());
                         }
-                        
-                        // Process all matching conversations
-                        List<Conversation> conversations = new ArrayList<>();
-                        AtomicInteger pendingRequests = new AtomicInteger(matchingConversations.size());
-                        
-                        for (DataSnapshot snapshot : matchingConversations) {
-                            String user1Id = snapshot.child("user1_id").getValue(String.class);
-                            String user2Id = snapshot.child("user2_id").getValue(String.class);
-                            String friendId = user1Id.equals(userId) ? user2Id : user1Id;
-                            
-                            // Fetch friend details for each conversation
-                            database.getReference("users")
-                                .child(friendId)
-                                .addListenerForSingleValueEvent(new ValueEventListener() {
-                                    @Override
-                                    public void onDataChange(DataSnapshot userSnapshot) {
-                                        String friendUsername = userSnapshot.child("first_name").getValue(String.class);
-                                        String profilePicUrl = userSnapshot.child("profilePicUrl").getValue(String.class);
-
-                                        // Create conversation object
-                                        Conversation conversation = new Conversation(
-                                            snapshot.getKey(),
-                                            friendUsername,
-                                            profilePicUrl,
-                                            snapshot.child("last_message").getValue(String.class),
-                                            snapshot.child("last_message_time").getValue(String.class)
-                                        );
-
-                                        // Add to our result list
-                                        conversations.add(conversation);
-                                        
-                                        // If this was the last pending request, return all results
-                                        if (pendingRequests.decrementAndGet() == 0) {
-                                            callback.onSuccess(conversations);
-                                        }
-                                    }
-
-                                    @Override
-                                    public void onCancelled(DatabaseError databaseError) {
-                                        if (pendingRequests.decrementAndGet() == 0) {
-                                            // Even if one fails, return what we have
-                                            callback.onSuccess(conversations);
-                                        }
-                                    }
-                                });
-                        }
-                    }
-
-                    @Override
-                    public void onCancelled(DatabaseError databaseError) {
-                        callback.onFailure(databaseError.getMessage());
-                    }
-                });
+                    });
+                } else {
+                    callback.onFailure("Conversation not found");
+                }
+            }
+            
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                callback.onFailure(error.getMessage());
+            }
+        });
+    }
+    
+    public void updateConversation(String conversationId, String lastMessage, String timestamp) {
+        Map<String, Object> updates = new HashMap<>();
+        updates.put("last_message", lastMessage);
+        updates.put("last_message_time", timestamp);
+        
+        conversationsRef.child(conversationId).updateChildren(updates);
     }
 
     public interface FirebaseCallback {
         void onSuccess(List<Conversation> conversations);
+        void onFailure(String error);
+    }
+    
+    public interface SingleConversationCallback {
+        void onSuccess(Conversation conversation);
         void onFailure(String error);
     }
 }

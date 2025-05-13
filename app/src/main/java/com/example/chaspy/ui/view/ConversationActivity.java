@@ -1,5 +1,6 @@
 package com.example.chaspy.ui.view;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
@@ -7,6 +8,7 @@ import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.example.chaspy.R;
 import com.example.chaspy.data.model.Conversation;
@@ -22,6 +24,9 @@ public class ConversationActivity extends AppCompatActivity {
     private RecyclerView recyclerView;
     private ConversationAdapter adapter;
     private ConversationViewModel mainViewModel;
+    private SwipeRefreshLayout swipeRefreshLayout;
+    private String currentUserId;
+    private boolean isFirstLoad = true;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -31,6 +36,9 @@ public class ConversationActivity extends AppCompatActivity {
         // Initialize RecyclerView
         recyclerView = findViewById(R.id.recyclerViewConversations);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
+        
+        // Initialize SwipeRefreshLayout
+        swipeRefreshLayout = findViewById(R.id.swipeRefreshLayout);
 
         // Initialize ViewModel
         mainViewModel = new ViewModelProvider(this).get(ConversationViewModel.class);
@@ -39,9 +47,13 @@ public class ConversationActivity extends AppCompatActivity {
         adapter = new ConversationAdapter(new ConversationAdapter.OnItemClickListener() {
             @Override
             public void onItemClick(Conversation conversation) {
-                Toast.makeText(ConversationActivity.this, 
-                    "Clicked on conversation with " + conversation.getFriendUsername(), 
-                    Toast.LENGTH_SHORT).show();
+                // Start ChatActivity with conversation data
+                Intent intent = new Intent(ConversationActivity.this, ChatActivity.class);
+                intent.putExtra("conversationId", conversation.getConversationId());
+                intent.putExtra("friendUsername", conversation.getFriendUsername());
+                intent.putExtra("friendProfilePicUrl", conversation.getProfilePicUrl());
+                intent.putExtra("friendId", conversation.getFriendId());
+                startActivity(intent);
             }
         });
         recyclerView.setAdapter(adapter);
@@ -51,7 +63,13 @@ public class ConversationActivity extends AppCompatActivity {
             @Override
             public void onChanged(List<Conversation> conversations) {
                 if (conversations != null) {
+                    // Only force clear adapter on first load to prevent flashing
+                    if (isFirstLoad) {
+                        adapter.submitList(null);
+                        isFirstLoad = false;
+                    }
                     adapter.submitList(conversations);
+                    swipeRefreshLayout.setRefreshing(false);
                 }
             }
         });
@@ -60,13 +78,57 @@ public class ConversationActivity extends AppCompatActivity {
             @Override
             public void onChanged(String error) {
                 Toast.makeText(ConversationActivity.this, "Error: " + error, Toast.LENGTH_SHORT).show();
+                swipeRefreshLayout.setRefreshing(false);
             }
         });
 
-        // Load conversations for a user (use the actual user ID here)
+        // Get current user ID
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
-//        String userId = user != null ? user.getUid() : null;
-        String userId = "jveRWKkaEVcbdiQuw9MsF4Rfobm2";
-        mainViewModel.loadConversations(userId);
+        currentUserId = user != null ? user.getUid() : null;
+        
+        // Set up swipe to refresh
+        swipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+            @Override
+            public void onRefresh() {
+                refreshConversations();
+            }
+        });
+        
+        // Load initial conversations
+        loadConversations();
+    }
+    
+    private void loadConversations() {
+        if (currentUserId != null) {
+            swipeRefreshLayout.setRefreshing(true);
+            mainViewModel.loadConversations(currentUserId);
+        } else {
+            Toast.makeText(this, "Error: User not authenticated", Toast.LENGTH_SHORT).show();
+        }
+    }
+    
+    private void refreshConversations() {
+        if (currentUserId != null) {
+            // Reset first load flag to prevent flickering during manual refresh
+            isFirstLoad = false;
+            mainViewModel.loadConversations(currentUserId);
+        } else {
+            swipeRefreshLayout.setRefreshing(false);
+        }
+    }
+    
+    @Override
+    protected void onResume() {
+        super.onResume();
+        // Only do a full refresh if we've been away from the activity
+        if (!isFirstLoad) {
+            refreshConversations();
+        }
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        // The ViewModel will continue to listen for updates
     }
 }

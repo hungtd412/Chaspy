@@ -17,6 +17,7 @@ import com.squareup.picasso.Picasso;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 
 public class ConversationAdapter extends ListAdapter<Conversation, ConversationAdapter.ConversationViewHolder> {
@@ -27,15 +28,27 @@ public class ConversationAdapter extends ListAdapter<Conversation, ConversationA
     private static final DiffUtil.ItemCallback<Conversation> DIFF_CALLBACK = new DiffUtil.ItemCallback<Conversation>() {
         @Override
         public boolean areItemsTheSame(@NonNull Conversation oldItem, @NonNull Conversation newItem) {
-            // Assuming Conversation has an ID that uniquely identifies it
             return oldItem.getConversationId().equals(newItem.getConversationId());
         }
 
         @Override
         public boolean areContentsTheSame(@NonNull Conversation oldItem, @NonNull Conversation newItem) {
-            // Compare all relevant fields to determine if content has changed
+            // Check all relevant fields to avoid unnecessary updates
             return oldItem.getLastMessage().equals(newItem.getLastMessage()) &&
-                   oldItem.getLastMessageTime() == newItem.getLastMessageTime();
+                   oldItem.getLastMessageTime().equals(newItem.getLastMessageTime()) &&
+                   oldItem.getFriendUsername().equals(newItem.getFriendUsername()) &&
+                   oldItem.getProfilePicUrl().equals(newItem.getProfilePicUrl());
+        }
+
+        @Override
+        public Object getChangePayload(@NonNull Conversation oldItem, @NonNull Conversation newItem) {
+            // Return a non-null value to enable partial view updates
+            // This tells RecyclerView that we want to do partial rebinding
+            if (!oldItem.getLastMessage().equals(newItem.getLastMessage()) || 
+                !oldItem.getLastMessageTime().equals(newItem.getLastMessageTime())) {
+                return true;
+            }
+            return null;
         }
     };
 
@@ -58,14 +71,40 @@ public class ConversationAdapter extends ListAdapter<Conversation, ConversationA
     @Override
     public void onBindViewHolder(ConversationViewHolder holder, int position) {
         Conversation conversation = getItem(position);
+        bindViewHolder(holder, conversation);
+    }
+    
+    @Override
+    public void onBindViewHolder(ConversationViewHolder holder, int position, List<Object> payloads) {
+        if (payloads.isEmpty()) {
+            // Full rebind if no payload
+            onBindViewHolder(holder, position);
+        } else {
+            // Partial rebind
+            Conversation conversation = getItem(position);
+            
+            // Only update the message and time
+            holder.lastMessageTextView.setText(conversation.getLastMessage());
+            holder.lastMessageTimeTextView.setText(formatTimestamp(conversation.getLastMessageTime()));
+        }
+    }
+    
+    private void bindViewHolder(ConversationViewHolder holder, Conversation conversation) {
         holder.friendUsernameTextView.setText(conversation.getFriendUsername());
         holder.lastMessageTextView.setText(conversation.getLastMessage());
-        
-        // Format the timestamp to relative time format (e.g., "10 phút trước" or "2 ngày trước")
         holder.lastMessageTimeTextView.setText(formatTimestamp(conversation.getLastMessageTime()));
 
-        // Load the profile picture using Picasso
-        Picasso.get().load(conversation.getProfilePicUrl()).into(holder.profilePicImageView);
+        // Load the profile picture using Picasso with caching
+        if (conversation.getProfilePicUrl() != null && !conversation.getProfilePicUrl().isEmpty()) {
+            Picasso.get()
+                .load(conversation.getProfilePicUrl())
+                .placeholder(R.drawable.default_profile) // Add a default profile placeholder
+                .error(R.drawable.default_profile) // Same for error state
+                .into(holder.profilePicImageView);
+        } else {
+            // Set default image if no profile pic URL
+            holder.profilePicImageView.setImageResource(R.drawable.default_profile);
+        }
 
         // Set the click listener for the item
         if (onItemClickListener != null) {
