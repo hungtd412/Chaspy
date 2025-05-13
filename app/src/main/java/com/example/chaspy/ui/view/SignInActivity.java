@@ -59,7 +59,7 @@ public class SignInActivity extends AppCompatActivity {
         signInViewModel.getIsUserSignedIn().observe(this, isSignedIn -> {
             if (isSignedIn) {
                 Toast.makeText(this, "Login successful", Toast.LENGTH_SHORT).show();
-                startActivity(new Intent(this, ConversationsActivity.class));
+                startActivity(new Intent(this, ConversationActivity.class));
                 finish();
             }
         });

@@ -15,7 +15,6 @@ public class Conversation {
         this.lastMessageTime = lastMessageTime;
     }
 
-    // Getters for each field
     public String getConversationId() {
         return conversationId;
     }

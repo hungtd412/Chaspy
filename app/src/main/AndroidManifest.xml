@@ -30,7 +30,7 @@
 
         <!-- MainActivity (nếu có dùng sau login) -->
         <activity
-            android:name=".ui.view.ConversationsActivity"
+            android:name=".ui.view.ConversationActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
