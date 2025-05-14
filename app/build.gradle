@@ -30,7 +30,6 @@ android {
 }
 
 dependencies {
-
     implementation libs.appcompat
     implementation libs.material
     implementation libs.activity
@@ -41,7 +40,13 @@ dependencies {
     implementation libs.credentials.play.services.auth
     implementation libs.googleid
     implementation libs.firebase.storage
+    implementation libs.circleimageview
+    implementation libs.picasso
+    implementation libs.glide
+    implementation libs.swiperefreshlayout
+    annotationProcessor libs.compiler
     testImplementation libs.junit
     androidTestImplementation libs.ext.junit
     androidTestImplementation libs.espresso.core
 }
+

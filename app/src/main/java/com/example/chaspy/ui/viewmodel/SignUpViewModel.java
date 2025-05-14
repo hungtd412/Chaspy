@@ -1,11 +1,9 @@
 package com.example.chaspy.ui.viewmodel;
 
 import android.text.TextUtils;
-import android.util.Patterns;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
-import com.example.chaspy.repository.UserRepository;
-import com.google.firebase.auth.FirebaseUser;
+import com.example.chaspy.data.repository.UserRepository;
 
 public class SignUpViewModel extends ViewModel {
 
@@ -27,20 +25,23 @@ public class SignUpViewModel extends ViewModel {
         return errorMessage;
     }
 
-    // Validate the email, password, and name fields
-    public boolean validateInput(String email, String password, String firstName, String lastName) {
-        if (TextUtils.isEmpty(email) || !Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
-            errorMessage.setValue("Invalid email address.");
+    // Validate the username, password, and name fields
+    public boolean validateInput(String username, String password, String firstName, String lastName) {
+        if (TextUtils.isEmpty(username) || username.length() < 3) {
+            errorMessage.setValue("Username must be at least 3 characters.");
             return false;
         }
+
         if (TextUtils.isEmpty(password) || password.length() < 6) {
             errorMessage.setValue("Password must be at least 6 characters.");
             return false;
         }
+        
         if (TextUtils.isEmpty(firstName) || firstName.length() < 2) {
             errorMessage.setValue("First name must be at least 2 characters.");
             return false;
         }
+        
         if (TextUtils.isEmpty(lastName) || lastName.length() < 2) {
             errorMessage.setValue("Last name must be at least 2 characters.");
             return false;
@@ -49,13 +50,12 @@ public class SignUpViewModel extends ViewModel {
     }
 
     // Register the user
-    public void registerUser(String email, String password, String firstName, String lastName) {
-        if (validateInput(email, password, firstName, lastName)) {
-            userRepository.registerUser(email, password).addOnCompleteListener(task -> {
+    public void registerUser(String username, String password, String firstName, String lastName) {
+        if (validateInput(username, password, firstName, lastName)) {
+            userRepository.registerUser(username + "@gmail.com", password).addOnCompleteListener(task -> {
                 if (task.isSuccessful()) {
-                    FirebaseUser firebaseUser = task.getResult().getUser();
                     // Save additional user data
-                    userRepository.saveUserData(firebaseUser, firstName, lastName)
+                    userRepository.saveUserData(task, firstName, lastName)
                             .addOnCompleteListener(saveTask -> {
                                 if (saveTask.isSuccessful()) {
                                     isUserRegistered.setValue(true);
