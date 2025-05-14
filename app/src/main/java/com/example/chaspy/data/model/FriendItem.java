@@ -3,6 +3,7 @@ package com.example.chaspy.data.model;
 public class FriendItem {
     private String uid;
     private String name;
+    // We'll keep the email field for internal use but not display it
     private String email;
     private String profileImageUrl;
     private boolean isActive;

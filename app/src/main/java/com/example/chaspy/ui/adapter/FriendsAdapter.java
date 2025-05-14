@@ -1,7 +1,6 @@
 package com.example.chaspy.ui.adapter;
 
 import android.content.Context;
-import android.content.Intent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -52,7 +51,7 @@ public class FriendsAdapter extends RecyclerView.Adapter<FriendsAdapter.FriendVi
         FriendItem friend = friendsList.get(position);
         
         holder.tvFriendName.setText(friend.getName());
-        holder.tvFriendEmail.setText(friend.getEmail());
+        // Don't display email as per requirements
         
         // Set online status
         if (friend.isActive()) {
@@ -109,8 +108,8 @@ public class FriendsAdapter extends RecyclerView.Adapter<FriendsAdapter.FriendVi
                 String filterPattern = constraint.toString().toLowerCase().trim();
                 
                 for (FriendItem item : friendsListFull) {
-                    if (item.getName().toLowerCase().contains(filterPattern) ||
-                            item.getEmail().toLowerCase().contains(filterPattern)) {
+                    // Search only by name (not email)
+                    if (item.getName().toLowerCase().contains(filterPattern)) {
                         filteredList.add(item);
                     }
                 }

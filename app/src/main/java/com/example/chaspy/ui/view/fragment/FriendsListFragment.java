@@ -1,6 +1,5 @@
 package com.example.chaspy.ui.view.fragment;
 
-import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -126,11 +125,11 @@ public class FriendsListFragment extends Fragment implements FriendsAdapter.OnFr
                     User friendUser = snapshot.getValue(User.class);
                     if (friendUser != null) {
                         FriendItem friend = new FriendItem(
-                                friendUser.getUid(),
+                                friendId, // Setting the UID explicitly
                                 friendUser.getFullName(),
                                 friendUser.getEmail(),
                                 friendUser.getProfilePicUrl(),
-                                friendUser.isActive()
+                                friendUser.isIs_active() // This field name remains unchanged
                         );
                         friendsList.add(friend);
                     }

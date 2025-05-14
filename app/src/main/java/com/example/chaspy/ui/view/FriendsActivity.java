@@ -83,6 +83,8 @@ public class FriendsActivity extends AppCompatActivity {
     }
     
     private void setupSearchView() {
+        searchViewFriends.setQueryHint("Search by name");  // Updated hint
+        
         searchViewFriends.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             @Override
             public boolean onQueryTextSubmit(String query) {

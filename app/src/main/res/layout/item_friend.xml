@@ -4,72 +4,71 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_margin="4dp"
+    android:layout_marginBottom="8dp"
     app:cardCornerRadius="8dp"
     app:cardElevation="2dp">
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:padding="8dp">
+        android:padding="12dp">
 
         <ImageView
             android:id="@+id/ivFriendProfilePic"
-            android:layout_width="60dp"
-            android:layout_height="60dp"
-            android:scaleType="centerCrop"
-            android:src="@android:drawable/ic_menu_gallery"
-            app:layout_constraintBottom_toBottomOf="parent"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            tools:src="@drawable/ic_launcher_foreground" />
 
         <TextView
             android:id="@+id/tvFriendName"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginStart="16dp"
-            android:ellipsize="end"
-            android:maxLines="1"
+            android:layout_marginStart="12dp"
             android:textSize="16sp"
             android:textStyle="bold"
-            app:layout_constraintEnd_toStartOf="@+id/btnChat"
+            android:textColor="@android:color/black"
             app:layout_constraintStart_toEndOf="@+id/ivFriendProfilePic"
-            app:layout_constraintTop_toTopOf="@+id/ivFriendProfilePic"
-            tools:text="John Doe" />
-
-        <TextView
-            android:id="@+id/tvFriendEmail"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:ellipsize="end"
-            android:maxLines="1"
-            android:textSize="14sp"
+            app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintEnd_toStartOf="@+id/btnChat"
-            app:layout_constraintStart_toStartOf="@+id/tvFriendName"
-            app:layout_constraintTop_toBottomOf="@+id/tvFriendName"
-            tools:text="john.doe@example.com" />
+            tools:text="User Name" />
 
         <TextView
             android:id="@+id/tvStatus"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:text="Online"
-            android:textColor="#4CAF50"
-            android:textSize="12sp"
-            app:layout_constraintStart_toStartOf="@+id/tvFriendEmail"
-            app:layout_constraintTop_toBottomOf="@+id/tvFriendEmail" />
+            android:layout_marginStart="12dp"
+            android:layout_marginTop="4dp"
+            android:textSize="14sp"
+            app:layout_constraintStart_toEndOf="@+id/ivFriendProfilePic"
+            app:layout_constraintTop_toBottomOf="@+id/tvFriendName"
+            app:layout_constraintEnd_toStartOf="@+id/btnChat"
+            tools:text="Online" />
+
+        <!-- Hidden email field (not displayed) -->
+        <TextView
+            android:id="@+id/tvFriendEmail"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:visibility="gone"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
 
         <Button
             android:id="@+id/btnChat"
             android:layout_width="wrap_content"
-            android:layout_height="36dp"
-            android:layout_marginEnd="8dp"
+            android:layout_height="wrap_content"
             android:text="Chat"
             android:textSize="12sp"
-            app:layout_constraintBottom_toBottomOf="parent"
+            android:paddingHorizontal="12dp"
+            android:paddingVertical="8dp"
+            android:minHeight="0dp"
+            android:minWidth="0dp"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 </androidx.cardview.widget.CardView>
