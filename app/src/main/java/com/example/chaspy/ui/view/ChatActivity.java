@@ -7,24 +7,20 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.lifecycle.Observer;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.chaspy.R;
 import com.example.chaspy.adapter.MessageAdapter;
 import com.example.chaspy.data.model.Message;
+import com.example.chaspy.ui.viewmodel.ChatViewModel;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.database.ChildEventListener;
-import com.google.firebase.database.DataSnapshot;
-import com.google.firebase.database.DatabaseError;
-import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.ValueEventListener;
 import com.squareup.picasso.Picasso;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.List;
 
 public class ChatActivity extends AppCompatActivity {
 
@@ -36,17 +32,12 @@ public class ChatActivity extends AppCompatActivity {
     
     private MessageAdapter messageAdapter;
     private LinearLayoutManager layoutManager;
+    private ChatViewModel chatViewModel;
     
     private String conversationId;
     private String friendUsername;
     private String friendProfilePicUrl;
     private String currentUserId;
-    
-    private DatabaseReference messagesRef;
-    private DatabaseReference conversationsRef;
-    
-    // Track if we're loading initial messages
-    private boolean initialMessagesLoaded = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -66,10 +57,6 @@ public class ChatActivity extends AppCompatActivity {
             return;
         }
         currentUserId = currentUser.getUid();
-        
-        // Initialize Firebase references
-        messagesRef = FirebaseDatabase.getInstance().getReference("messages").child(conversationId);
-        conversationsRef = FirebaseDatabase.getInstance().getReference("conversations").child(conversationId);
         
         // Initialize UI components
         recyclerViewMessages = findViewById(R.id.recyclerViewMessages);
@@ -95,111 +82,48 @@ public class ChatActivity extends AppCompatActivity {
         // Add a back button click listener
         findViewById(R.id.buttonBack).setOnClickListener(v -> finish());
         
-        // Add send button click listener
-        buttonSend.setOnClickListener(v -> {
-            String message = editTextMessage.getText().toString().trim();
-            if (!message.isEmpty()) {
-                sendMessage(message);
-                editTextMessage.setText("");
+        // Initialize ViewModel
+        chatViewModel = new ViewModelProvider(this).get(ChatViewModel.class);
+        chatViewModel.init(conversationId, currentUserId);
+        
+        // Observe messages
+        chatViewModel.getMessages().observe(this, new Observer<List<Message>>() {
+            @Override
+            public void onChanged(List<Message> messages) {
+                messageAdapter.setMessages(messages);
+                scrollToBottom();
             }
         });
         
-        // Load messages for this conversation
-        loadMessages();
-    }
-    
-    private void loadMessages() {
-        messagesRef.addChildEventListener(new ChildEventListener() {
+        // Observe new messages
+        chatViewModel.getNewMessageAdded().observe(this, new Observer<Message>() {
             @Override
-            public void onChildAdded(DataSnapshot dataSnapshot, String previousChildName) {
-                String messageId = dataSnapshot.getKey();
-                String senderId = dataSnapshot.child("sender_id").getValue(String.class);
-                String messageContent = dataSnapshot.child("message_content").getValue(String.class);
-                String messageType = dataSnapshot.child("message_type").getValue(String.class);
-                String timestamp = dataSnapshot.child("timestamp").getValue(String.class);
-                
-                if (messageId != null && senderId != null && messageContent != null && 
-                    messageType != null && timestamp != null) {
-                    Message message = new Message(messageId, senderId, messageContent, messageType, timestamp);
+            public void onChanged(Message message) {
+                if (message != null) {
                     messageAdapter.addMessage(message);
                     scrollToBottom();
                 }
             }
-
-            @Override
-            public void onChildChanged(DataSnapshot dataSnapshot, String previousChildName) {
-                // Handle message updates if needed
-            }
-
-            @Override
-            public void onChildRemoved(DataSnapshot dataSnapshot) {
-                // Handle message deletion if needed
-            }
-
-            @Override
-            public void onChildMoved(DataSnapshot dataSnapshot, String previousChildName) {
-                // Handle message reordering if needed
-            }
-
-            @Override
-            public void onCancelled(DatabaseError databaseError) {
-                Toast.makeText(ChatActivity.this, "Failed to load messages: " + databaseError.getMessage(), 
-                    Toast.LENGTH_SHORT).show();
-            }
         });
-
-        // Count initial messages to know when all messages are loaded
-        messagesRef.addListenerForSingleValueEvent(new ValueEventListener() {
+        
+        // Observe errors
+        chatViewModel.getError().observe(this, new Observer<String>() {
             @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-                initialMessagesLoaded = true;
-                if (dataSnapshot.exists()) {
-                    scrollToBottom();
+            public void onChanged(String error) {
+                if (error != null && !error.isEmpty()) {
+                    Toast.makeText(ChatActivity.this, error, Toast.LENGTH_SHORT).show();
                 }
             }
-
-            @Override
-            public void onCancelled(DatabaseError databaseError) {
-                Toast.makeText(ChatActivity.this, "Failed to load message count: " + databaseError.getMessage(),
-                        Toast.LENGTH_SHORT).show();
+        });
+        
+        // Add send button click listener
+        buttonSend.setOnClickListener(v -> {
+            String message = editTextMessage.getText().toString().trim();
+            if (!message.isEmpty()) {
+                chatViewModel.sendMessage(message);
+                editTextMessage.setText("");
             }
         });
-    }
-    
-    private void sendMessage(String messageText) {
-        // Create a new message reference with a unique ID
-        DatabaseReference newMessageRef = messagesRef.push();
-        String messageId = newMessageRef.getKey();
-        
-        if (messageId == null) {
-            Toast.makeText(this, "Failed to generate message ID", Toast.LENGTH_SHORT).show();
-            return;
-        }
-        
-        // Current timestamp as a string
-        String timestamp = String.valueOf(System.currentTimeMillis());
-        
-        // Create message data
-        Map<String, Object> messageData = new HashMap<>();
-        messageData.put("sender_id", currentUserId);
-        messageData.put("message_content", messageText);
-        messageData.put("message_type", "text");
-        messageData.put("timestamp", timestamp);
-        
-        // Save the message
-        newMessageRef.setValue(messageData)
-            .addOnSuccessListener(aVoid -> {
-                // Update the conversation's last message information
-                Map<String, Object> conversationUpdates = new HashMap<>();
-                conversationUpdates.put("last_message", messageText);
-                conversationUpdates.put("last_message_time", timestamp);
-                
-                conversationsRef.updateChildren(conversationUpdates)
-                    .addOnFailureListener(e -> Toast.makeText(ChatActivity.this, 
-                        "Failed to update conversation: " + e.getMessage(), Toast.LENGTH_SHORT).show());
-            })
-            .addOnFailureListener(e -> Toast.makeText(ChatActivity.this, 
-                "Failed to send message: " + e.getMessage(), Toast.LENGTH_SHORT).show());
     }
     
     private void scrollToBottom() {
@@ -209,5 +133,11 @@ public class ChatActivity extends AppCompatActivity {
                 recyclerViewMessages.smoothScrollToPosition(messageCount - 1);
             }
         });
+    }
+    
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        // ViewModel's onCleared will handle cleanup of resources
     }
 }
