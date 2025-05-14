@@ -42,9 +42,15 @@ public class ConversationActivity extends AppCompatActivity implements SearchVie
         // Initialize SwipeRefreshLayout
         swipeRefreshLayout = findViewById(R.id.swipeRefreshLayout);
         
-        // Initialize SearchView
+        // Initialize SearchView with improved configuration
         searchView = findViewById(R.id.searchView);
+        searchView.setIconifiedByDefault(false);
+        searchView.setFocusable(true);
+        searchView.setClickable(true);
         searchView.setOnQueryTextListener(this);
+        
+        // Make entire search view area clickable
+        searchView.setOnClickListener(v -> searchView.setIconified(false));
 
         // Initialize ViewModel
         mainViewModel = new ViewModelProvider(this).get(ConversationViewModel.class);
