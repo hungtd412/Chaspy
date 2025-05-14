@@ -7,7 +7,9 @@ import androidx.lifecycle.ViewModel;
 import com.example.chaspy.data.model.Message;
 import com.example.chaspy.data.repository.ChatRepository;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class ChatViewModel extends ViewModel {
     private final ChatRepository chatRepository;
@@ -18,6 +20,7 @@ public class ChatViewModel extends ViewModel {
     
     private String conversationId;
     private String currentUserId;
+    private Map<String, Message> messageMap = new HashMap<>();
     
     public ChatViewModel() {
         chatRepository = new ChatRepository();
@@ -26,6 +29,7 @@ public class ChatViewModel extends ViewModel {
     public void init(String conversationId, String currentUserId) {
         this.conversationId = conversationId;
         this.currentUserId = currentUserId;
+        messageMap.clear(); // Clear existing messages when initializing
         loadMessages();
     }
     
@@ -56,8 +60,15 @@ public class ChatViewModel extends ViewModel {
         chatRepository.getMessages(conversationId, new ChatRepository.ChatCallback<List<Message>>() {
             @Override
             public void onSuccess(List<Message> messages) {
-                messageList.setValue(messages);
+                // Store messages in map first to prevent duplicates
+                for (Message message : messages) {
+                    messageMap.put(message.getMessageId(), message);
+                }
+                messageList.setValue(List.copyOf(messageMap.values()));
                 isLoading.setValue(false);
+                
+                // Start listening for new messages AFTER initial load
+                startMessageListener();
             }
             
             @Override
@@ -66,12 +77,16 @@ public class ChatViewModel extends ViewModel {
                 isLoading.setValue(false);
             }
         });
-        
-        // Start listening for new messages
+    }
+    
+    private void startMessageListener() {
         chatRepository.startMessageListener(conversationId, new ChatRepository.MessageListener() {
             @Override
             public void onNewMessage(Message message) {
-                newMessageAdded.setValue(message);
+                if (message != null && !messageMap.containsKey(message.getMessageId())) {
+                    messageMap.put(message.getMessageId(), message);
+                    newMessageAdded.setValue(message);
+                }
             }
             
             @Override
@@ -108,5 +123,6 @@ public class ChatViewModel extends ViewModel {
         super.onCleared();
         // Clean up resources
         chatRepository.stopMessageListener();
+        messageMap.clear();
     }
 }

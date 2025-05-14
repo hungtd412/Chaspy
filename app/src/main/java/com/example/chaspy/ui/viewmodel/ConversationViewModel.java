@@ -15,14 +15,17 @@ import java.util.List;
 public class ConversationViewModel extends ViewModel {
 
     private MutableLiveData<List<Conversation>> conversationsLiveData;
+    private MutableLiveData<List<Conversation>> filteredConversationsLiveData;
     private MutableLiveData<String> errorLiveData;
     private ConversationRepository conversationRepository;
     private String currentUserId;
     private List<Conversation> currentConversations;
     private boolean isInitialLoadComplete = false;
+    private String currentQuery = "";
 
     public ConversationViewModel() {
         conversationsLiveData = new MutableLiveData<>();
+        filteredConversationsLiveData = new MutableLiveData<>();
         errorLiveData = new MutableLiveData<>();
         conversationRepository = new ConversationRepository();
         currentConversations = new ArrayList<>();
@@ -30,6 +33,10 @@ public class ConversationViewModel extends ViewModel {
 
     public LiveData<List<Conversation>> getConversations() {
         return conversationsLiveData;
+    }
+    
+    public LiveData<List<Conversation>> getFilteredConversations() {
+        return filteredConversationsLiveData;
     }
 
     public LiveData<String> getError() {
@@ -49,6 +56,13 @@ public class ConversationViewModel extends ViewModel {
                 sortConversations();
                 conversationsLiveData.setValue(currentConversations);
                 
+                // Apply any existing filter
+                if (!currentQuery.isEmpty()) {
+                    applyFilter(currentQuery);
+                } else {
+                    filteredConversationsLiveData.setValue(currentConversations);
+                }
+                
                 // Start listening for message updates only after initial load
                 // and only if we haven't done so already
                 if (!isInitialLoadComplete) {
@@ -62,6 +76,31 @@ public class ConversationViewModel extends ViewModel {
                 errorLiveData.setValue(error);
             }
         });
+    }
+    
+    public void filterConversations(String query) {
+        currentQuery = query != null ? query.toLowerCase().trim() : "";
+        applyFilter(currentQuery);
+    }
+    
+    private void applyFilter(String query) {
+        if (query.isEmpty()) {
+            // If query is empty, show all conversations
+            filteredConversationsLiveData.setValue(currentConversations);
+            return;
+        }
+        
+        List<Conversation> filteredList = new ArrayList<>();
+        
+        // Filter conversations based on username containing the query
+        for (Conversation conversation : currentConversations) {
+            String username = conversation.getFriendUsername().toLowerCase();
+            if (username.contains(query)) {
+                filteredList.add(conversation);
+            }
+        }
+        
+        filteredConversationsLiveData.setValue(filteredList);
     }
     
     private void sortConversations() {
@@ -129,6 +168,13 @@ public class ConversationViewModel extends ViewModel {
         
         // Update the LiveData with a new list to trigger observers
         conversationsLiveData.postValue(new ArrayList<>(currentConversations));
+        
+        // Re-apply any active filter
+        if (!currentQuery.isEmpty()) {
+            applyFilter(currentQuery);
+        } else {
+            filteredConversationsLiveData.postValue(currentConversations);
+        }
     }
     
     @Override

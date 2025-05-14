@@ -14,12 +14,15 @@ import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class ChatFirebaseService {
     private final DatabaseReference databaseRef;
     private ChildEventListener messageListener;
+    private Set<String> loadedMessageIds = new HashSet<>();
     
     public ChatFirebaseService() {
         databaseRef = FirebaseDatabase.getInstance().getReference();
@@ -32,6 +35,7 @@ public class ChatFirebaseService {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                 List<Message> messages = new ArrayList<>();
+                loadedMessageIds.clear(); // Reset loaded message IDs
                 
                 for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
                     String messageId = snapshot.getKey();
@@ -44,6 +48,7 @@ public class ChatFirebaseService {
                         messageType != null && timestamp != null) {
                         Message message = new Message(messageId, senderId, messageContent, messageType, timestamp);
                         messages.add(message);
+                        loadedMessageIds.add(messageId); // Track loaded messages
                     }
                 }
                 
@@ -103,17 +108,19 @@ public class ChatFirebaseService {
         messageListener = new ChildEventListener() {
             @Override
             public void onChildAdded(@NonNull DataSnapshot dataSnapshot, @Nullable String previousChildName) {
-                // Only process messages that were just added (not initial load)
-                if (previousChildName != null) {
-                    String messageId = dataSnapshot.getKey();
+                String messageId = dataSnapshot.getKey();
+                
+                // Skip if this message was already loaded in the initial fetch
+                if (messageId != null && !loadedMessageIds.contains(messageId)) {
                     String senderId = dataSnapshot.child("sender_id").getValue(String.class);
                     String messageContent = dataSnapshot.child("message_content").getValue(String.class);
                     String messageType = dataSnapshot.child("message_type").getValue(String.class);
                     String timestamp = dataSnapshot.child("timestamp").getValue(String.class);
                     
-                    if (messageId != null && senderId != null && messageContent != null && 
+                    if (senderId != null && messageContent != null && 
                         messageType != null && timestamp != null) {
                         Message message = new Message(messageId, senderId, messageContent, messageType, timestamp);
+                        loadedMessageIds.add(messageId); // Add to tracked messages
                         listener.onNewMessage(message);
                     }
                 }
