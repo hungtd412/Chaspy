@@ -45,7 +45,6 @@ public class ConversationActivity extends AppCompatActivity implements SearchVie
         // Initialize SearchView with improved configuration
         searchView = findViewById(R.id.searchView);
         searchView.setIconifiedByDefault(false);
-        searchView.setFocusable(true);
         searchView.setClickable(true);
         searchView.setOnQueryTextListener(this);
         
