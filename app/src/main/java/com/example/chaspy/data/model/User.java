@@ -8,7 +8,7 @@ public class User {
     private String email;
     private String firstName; // Changed from first_name
     private String lastName;  // Changed from last_name
-    private boolean is_active; // Unchanged
+    private boolean isActive; // Unchanged
     private String profilePicUrl;
     private Map<String, Boolean> conversations = new HashMap<>();
     private Map<String, Boolean> friends = new HashMap<>();
@@ -60,12 +60,12 @@ public class User {
         return firstName + " " + lastName;
     }
 
-    public boolean isIs_active() {
-        return is_active;
+    public boolean isisActive() {
+        return isActive;
     }
 
-    public void setIs_active(boolean is_active) {
-        this.is_active = is_active;
+    public void setisActive(boolean isActive) {
+        this.isActive = isActive;
     }
 
     public String getProfilePicUrl() {

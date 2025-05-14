@@ -4,7 +4,7 @@
       "email": "fff@gmail.com",
       "firstName": "Hung",
       "lastName": "Tran",
-      "is_active": true,
+      "isActive": true,
       "profilePicUrl": "https://vcdn1-vnexpress.vnecdn.net/2021/12/16/Ronaldo-9715-1626678656-3640-1-3558-5567-1639643535.jpg?w=460&h=0&q=100&dpr=2&fit=crop&s=9K7V2Z3m_6B48e61rjO0Lw",
       "friends": {
         "aU8cY9p37Sg5FbJjtf6s82JFn4l8": true,
@@ -18,7 +18,7 @@
       "email": "alice.smith@example.com",
       "firstName": "Alice",
       "lastName": "Smith",
-      "is_active": true,
+      "isActive": true,
       "profilePicUrl": "https://vcdn1-vnexpress.vnecdn.net/2021/12/16/Ronaldo-9715-1626678656-3640-1-3558-5567-1639643535.jpg?w=460&h=0&q=100&dpr=2&fit=crop&s=9K7V2Z3m_6B48e61rjO0Lw",
       "friends": {
         "uid_123456": true
@@ -31,7 +31,7 @@
       "email": "daotrunghieu859@gmail.com",
       "firstName": "Hieu",
       "lastName": "Dao",
-      "is_active": true,
+      "isActive": true,
       "profilePicUrl": "https://www.fcbarcelona.com/fcbarcelona/photo/2022/08/02/ae5252d1-b79b-4950-9e34-6e67fac09bb0/LeoMessi20092010_pic_fcb-arsenal62.jpg",
       "friends": {
         "uid_987654": true

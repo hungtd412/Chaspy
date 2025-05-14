@@ -129,7 +129,7 @@ public class FriendsListFragment extends Fragment implements FriendsAdapter.OnFr
                                 friendUser.getFullName(),
                                 friendUser.getEmail(),
                                 friendUser.getProfilePicUrl(),
-                                friendUser.isIs_active() // This field name remains unchanged
+                                friendUser.isisActive() // This field name remains unchanged
                         );
                         friendsList.add(friend);
                     }
