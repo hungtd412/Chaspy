@@ -129,7 +129,7 @@ public class FriendsListFragment extends Fragment implements FriendsAdapter.OnFr
                                 friendUser.getFullName(),
                                 friendUser.getEmail(),
                                 friendUser.getProfilePicUrl(),
-                                friendUser.isisActive() // This field name remains unchanged
+                                friendUser.isisActive()
                         );
                         friendsList.add(friend);
                     }
@@ -171,8 +171,6 @@ public class FriendsListFragment extends Fragment implements FriendsAdapter.OnFr
     
     @Override
     public void onChatButtonClick(FriendItem friend) {
-        // TODO: Navigate to chat with this friend
-        // For now just log the action
         Log.d(TAG, "Opening chat with: " + friend.getName());
     }
     

@@ -1,5 +1,6 @@
 package com.example.chaspy.ui.view;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
@@ -15,8 +16,8 @@ import com.example.chaspy.ui.viewmodel.SignUpViewModel;
 
 public class SignUpActivity extends AppCompatActivity {
 
-    private EditText etFirstName, etLastName, etUsername, etPassword;
-    private Button btnSignUp;
+    private EditText etFirstName, etLastName, etUsername, etPassword, etConfirmPassword;
+    private Button btnSignUp, btnLogin;
     private ProgressBar progressBar;
     
     private SignUpViewModel signUpViewModel;
@@ -32,9 +33,11 @@ public class SignUpActivity extends AppCompatActivity {
         // Liên kết với layout
         etFirstName = findViewById(R.id.et_first_name);
         etLastName = findViewById(R.id.et_last_name);
-        etUsername = findViewById(R.id.et_email); // Assuming you'll update the ID later
+        etUsername = findViewById(R.id.et_username);
         etPassword = findViewById(R.id.et_password);
+        etConfirmPassword = findViewById(R.id.et_confirm_password);
         btnSignUp = findViewById(R.id.btn_sign_up);
+        btnLogin = findViewById(R.id.btn_login);
         progressBar = findViewById(R.id.progressBar);
 
         // Set up observers
@@ -45,16 +48,47 @@ public class SignUpActivity extends AppCompatActivity {
             String lastName = etLastName.getText().toString().trim();
             String username = etUsername.getText().toString().trim();
             String password = etPassword.getText().toString().trim();
+            String confirmPassword = etConfirmPassword.getText().toString().trim();
+
+            // Check if passwords match
+            if (!password.equals(confirmPassword)) {
+                Toast.makeText(SignUpActivity.this, "Passwords do not match", Toast.LENGTH_SHORT).show();
+                return;
+            }
 
             // Show progress indicator
             progressBar.setVisibility(View.VISIBLE);
             
+            String email = username + "@gmail.com";
+            
             // Call ViewModel to handle registration
-            signUpViewModel.registerUser(username, password, firstName, lastName);
+            signUpViewModel.registerUser(email, password, firstName, lastName);
+        });
+        
+        // Set click listener for login button to navigate to SignInActivity
+        btnLogin.setOnClickListener(view -> {
+            Intent intent = new Intent(SignUpActivity.this, SignInActivity.class);
+            startActivity(intent);
+            finish(); // Close current activity
         });
     }
     
     private void setupObservers() {
-        // ... existing code ...
+        // Observe registration success
+        signUpViewModel.getIsUserRegistered().observe(this, isRegistered -> {
+            progressBar.setVisibility(View.GONE);
+            if (isRegistered) {
+                Toast.makeText(SignUpActivity.this, "Registration successful!", Toast.LENGTH_SHORT).show();
+                finish(); // Close activity and return to login screen
+            }
+        });
+
+        // Observe error messages
+        signUpViewModel.getErrorMessage().observe(this, errorMsg -> {
+            progressBar.setVisibility(View.GONE);
+            if (errorMsg != null && !errorMsg.isEmpty()) {
+                Toast.makeText(SignUpActivity.this, errorMsg, Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 }
