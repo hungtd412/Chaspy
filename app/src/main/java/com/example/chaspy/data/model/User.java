@@ -6,12 +6,13 @@ import java.util.Map;
 public class User {
     private String uid;
     private String email;
-    private String firstName;
-    private String lastName;
-    private boolean isActive;
+    private String firstName; // Changed from first_name
+    private String lastName;  // Changed from last_name
+    private boolean isActive; // Unchanged
     private String profilePicUrl;
     private Map<String, Boolean> conversations = new HashMap<>();
     private Map<String, Boolean> friends = new HashMap<>();
+    private Map<String, Boolean> block_list = new HashMap<>(); // Unchanged
 
     public User() {
         // Required empty constructor for Firebase
@@ -59,12 +60,12 @@ public class User {
         return firstName + " " + lastName;
     }
 
-    public boolean isActive() {
+    public boolean isisActive() {
         return isActive;
     }
 
-    public void setActive(boolean active) {
-        isActive = active;
+    public void setisActive(boolean isActive) {
+        this.isActive = isActive;
     }
 
     public String getProfilePicUrl() {
@@ -89,6 +90,14 @@ public class User {
 
     public void setFriends(Map<String, Boolean> friends) {
         this.friends = friends;
+    }
+    
+    public Map<String, Boolean> getBlock_list() {
+        return block_list;
+    }
+
+    public void setBlock_list(Map<String, Boolean> block_list) {
+        this.block_list = block_list;
     }
 
     public String getUserName() {

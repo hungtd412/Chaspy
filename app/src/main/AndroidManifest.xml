@@ -40,6 +40,12 @@
         <activity
             android:name=".ui.view.ChatActivity"
             android:exported="true" />
+
+        <activity
+            android:name=".ui.view.FriendsActivity"
+            android:exported="true">
+
+        </activity>
     </application>
 
 </manifest>

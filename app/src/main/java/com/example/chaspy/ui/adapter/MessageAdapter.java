@@ -1,4 +1,4 @@
-package com.example.chaspy.adapter;
+package com.example.chaspy.ui.adapter;
 
 import android.text.format.DateFormat;
 import android.view.LayoutInflater;
@@ -17,12 +17,15 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.MessageViewHolder> {
     
     private List<Message> messageList = new ArrayList<>();
+    private Map<String, Integer> messagePositions = new HashMap<>();
     private String currentUserId;
     
     public MessageAdapter(String currentUserId) {
@@ -63,15 +66,37 @@ public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.MessageV
     }
     
     public void setMessages(List<Message> messages) {
-        this.messageList = messages;
-        sortMessages();
+        this.messageList.clear();
+        this.messagePositions.clear();
+        
+        if (messages != null) {
+            this.messageList.addAll(messages);
+            sortMessages();
+            
+            // Update position map
+            for (int i = 0; i < this.messageList.size(); i++) {
+                messagePositions.put(this.messageList.get(i).getMessageId(), i);
+            }
+        }
+        
         notifyDataSetChanged();
     }
     
     public void addMessage(Message message) {
+        if (message == null || messagePositions.containsKey(message.getMessageId())) {
+            return; // Skip if null or already exists
+        }
+        
         messageList.add(message);
         sortMessages();
-        notifyDataSetChanged(); // Using full refresh to ensure correct ordering
+        
+        // Update all positions as sorting may have changed positions
+        messagePositions.clear();
+        for (int i = 0; i < messageList.size(); i++) {
+            messagePositions.put(messageList.get(i).getMessageId(), i);
+        }
+        
+        notifyDataSetChanged();
     }
     
     /**

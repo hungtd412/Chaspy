@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.SearchView;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -19,12 +20,13 @@ import com.google.firebase.auth.FirebaseUser;
 
 import java.util.List;
 
-public class ConversationActivity extends AppCompatActivity {
+public class ConversationActivity extends AppCompatActivity implements SearchView.OnQueryTextListener {
 
     private RecyclerView recyclerView;
     private ConversationAdapter adapter;
     private ConversationViewModel mainViewModel;
     private SwipeRefreshLayout swipeRefreshLayout;
+    private SearchView searchView;
     private String currentUserId;
     private boolean isFirstLoad = true;
 
@@ -39,6 +41,15 @@ public class ConversationActivity extends AppCompatActivity {
         
         // Initialize SwipeRefreshLayout
         swipeRefreshLayout = findViewById(R.id.swipeRefreshLayout);
+        
+        // Initialize SearchView with improved configuration
+        searchView = findViewById(R.id.searchView);
+        searchView.setIconifiedByDefault(false);
+        searchView.setClickable(true);
+        searchView.setOnQueryTextListener(this);
+        
+        // Make entire search view area clickable
+        searchView.setOnClickListener(v -> searchView.setIconified(false));
 
         // Initialize ViewModel
         mainViewModel = new ViewModelProvider(this).get(ConversationViewModel.class);
@@ -71,6 +82,14 @@ public class ConversationActivity extends AppCompatActivity {
                     adapter.submitList(conversations);
                     swipeRefreshLayout.setRefreshing(false);
                 }
+            }
+        });
+        
+        // Observe filtered conversations
+        mainViewModel.getFilteredConversations().observe(this, new Observer<List<Conversation>>() {
+            @Override
+            public void onChanged(List<Conversation> filteredConversations) {
+                adapter.submitList(filteredConversations);
             }
         });
 
@@ -112,6 +131,10 @@ public class ConversationActivity extends AppCompatActivity {
             // Reset first load flag to prevent flickering during manual refresh
             isFirstLoad = false;
             mainViewModel.loadConversations(currentUserId);
+            
+            // Clear search
+            searchView.setQuery("", false);
+            searchView.clearFocus();
         } else {
             swipeRefreshLayout.setRefreshing(false);
         }
@@ -130,5 +153,18 @@ public class ConversationActivity extends AppCompatActivity {
     protected void onPause() {
         super.onPause();
         // The ViewModel will continue to listen for updates
+    }
+    
+    // SearchView query text listener implementations
+    @Override
+    public boolean onQueryTextSubmit(String query) {
+        mainViewModel.filterConversations(query);
+        return true;
+    }
+
+    @Override
+    public boolean onQueryTextChange(String newText) {
+        mainViewModel.filterConversations(newText);
+        return true;
     }
 }

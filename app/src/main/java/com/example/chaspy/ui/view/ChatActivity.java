@@ -13,7 +13,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.chaspy.R;
-import com.example.chaspy.adapter.MessageAdapter;
+import com.example.chaspy.ui.adapter.MessageAdapter;
 import com.example.chaspy.data.model.Message;
 import com.example.chaspy.ui.viewmodel.ChatViewModel;
 import com.google.firebase.auth.FirebaseAuth;
@@ -87,32 +87,25 @@ public class ChatActivity extends AppCompatActivity {
         chatViewModel.init(conversationId, currentUserId);
         
         // Observe messages
-        chatViewModel.getMessages().observe(this, new Observer<List<Message>>() {
-            @Override
-            public void onChanged(List<Message> messages) {
+        chatViewModel.getMessages().observe(this, messages -> {
+            if (messages != null) {
                 messageAdapter.setMessages(messages);
                 scrollToBottom();
             }
         });
         
         // Observe new messages
-        chatViewModel.getNewMessageAdded().observe(this, new Observer<Message>() {
-            @Override
-            public void onChanged(Message message) {
-                if (message != null) {
-                    messageAdapter.addMessage(message);
-                    scrollToBottom();
-                }
+        chatViewModel.getNewMessageAdded().observe(this, message -> {
+            if (message != null) {
+                messageAdapter.addMessage(message);
+                scrollToBottom();
             }
         });
         
         // Observe errors
-        chatViewModel.getError().observe(this, new Observer<String>() {
-            @Override
-            public void onChanged(String error) {
-                if (error != null && !error.isEmpty()) {
-                    Toast.makeText(ChatActivity.this, error, Toast.LENGTH_SHORT).show();
-                }
+        chatViewModel.getError().observe(this, error -> {
+            if (error != null && !error.isEmpty()) {
+                Toast.makeText(ChatActivity.this, error, Toast.LENGTH_SHORT).show();
             }
         });
         
