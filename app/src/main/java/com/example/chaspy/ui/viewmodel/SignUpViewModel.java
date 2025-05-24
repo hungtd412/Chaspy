@@ -4,6 +4,7 @@ import android.text.TextUtils;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 import com.example.chaspy.data.repository.UserRepository;
+import com.google.firebase.auth.FirebaseAuthUserCollisionException;
 
 public class SignUpViewModel extends ViewModel {
 
@@ -25,8 +26,10 @@ public class SignUpViewModel extends ViewModel {
         return errorMessage;
     }
 
-    // Validate the username, password, and name fields
-    public boolean validateInput(String username, String password, String firstName, String lastName) {
+    public boolean validateInput(String email, String password, String firstName, String lastName) {
+        // Extract username from email
+        String username = email.replace("@gmail.com", "");
+        
         if (TextUtils.isEmpty(username) || username.length() < 3) {
             errorMessage.setValue("Username must be at least 3 characters.");
             return false;
@@ -50,9 +53,9 @@ public class SignUpViewModel extends ViewModel {
     }
 
     // Register the user
-    public void registerUser(String username, String password, String firstName, String lastName) {
-        if (validateInput(username, password, firstName, lastName)) {
-            userRepository.registerUser(username + "@gmail.com", password).addOnCompleteListener(task -> {
+    public void registerUser(String email, String password, String firstName, String lastName) {
+        if (validateInput(email, password, firstName, lastName)) {
+            userRepository.registerUser(email, password).addOnCompleteListener(task -> {
                 if (task.isSuccessful()) {
                     // Save additional user data
                     userRepository.saveUserData(task, firstName, lastName)
@@ -64,7 +67,13 @@ public class SignUpViewModel extends ViewModel {
                                 }
                             });
                 } else {
-                    errorMessage.setValue("Registration failed: " + task.getException().getMessage());
+                    // Check specifically for email already in use error
+                    if (task.getException() instanceof FirebaseAuthUserCollisionException) {
+                        String username = email.replace("@gmail.com", "");
+                        errorMessage.setValue("Username '" + username + "' is already taken. Please choose a different username.");
+                    } else {
+                        errorMessage.setValue("Registration failed: " + task.getException().getMessage());
+                    }
                 }
             });
         }

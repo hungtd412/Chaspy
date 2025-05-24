@@ -1,14 +1,15 @@
 package com.example.chaspy.data.model;
 
+import com.google.firebase.database.Exclude;
 import java.util.HashMap;
 import java.util.Map;
 
 public class User {
     private String uid;
     private String email;
-    private String firstName; // Changed from first_name
-    private String lastName;  // Changed from last_name
-    private boolean isActive; // Unchanged
+    private String firstName;
+    private String lastName;
+    private boolean isActive;
     private String profilePicUrl;
     private Map<String, Boolean> conversations = new HashMap<>();
     private Map<String, Boolean> friends = new HashMap<>();
@@ -56,6 +57,7 @@ public class User {
         this.lastName = lastName;
     }
 
+    @Exclude
     public String getFullName() {
         return firstName + " " + lastName;
     }
@@ -100,6 +102,7 @@ public class User {
         this.block_list = block_list;
     }
 
+    @Exclude
     public String getUserName() {
         return firstName + " " + lastName;
     }

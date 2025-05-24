@@ -29,6 +29,7 @@ public class UserFirebaseService {
     // Save additional user data in Firestore
     public Task<Void> saveUserData(FirebaseUser firebaseUser, String firstName, String lastName) {
         User user = new User(firstName, lastName, firebaseUser.getEmail());
+        System.out.println(user.toString());
         return usersRef
                 .child(firebaseUser.getUid())
                 .setValue(user);

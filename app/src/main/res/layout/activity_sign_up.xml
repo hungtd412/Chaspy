@@ -131,32 +131,6 @@
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Email"
-                android:textColor="#343A69"
-                android:textSize="14sp"
-                android:layout_marginBottom="4dp"/>
-
-            <EditText
-                android:id="@+id/et_email"
-                android:layout_width="match_parent"
-                android:layout_height="45dp"
-                android:inputType="textEmailAddress"
-                android:background="@drawable/edit_text_sign_up"
-                android:paddingHorizontal="8dp"
-                android:textColor="#000000"
-                android:textColorHint="#2C2C6B"
-                android:textSize="14sp"/>
-        </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="300dp"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:layout_marginBottom="8dp">
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
                 android:text="Password"
                 android:textColor="#343A69"
                 android:textSize="14sp"
@@ -212,13 +186,16 @@
             android:textColor="#FFFFFF"
             android:layout_marginBottom="16dp"/>
 
-        <TextView
-            android:id="@+id/tv_login"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Log in"
-            android:textColor="#2C2C6B"
-            android:textSize="16sp"/>
+        <Button
+            android:id="@+id/btn_login"
+            android:layout_width="150dp"
+            android:layout_height="45dp"
+            android:backgroundTint="#2C2C6B"
+            android:background="@drawable/button_background"
+            android:text="LOG IN"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:textColor="#FFFFFF"/>
 
         <ProgressBar
             android:id="@+id/progressBar"
