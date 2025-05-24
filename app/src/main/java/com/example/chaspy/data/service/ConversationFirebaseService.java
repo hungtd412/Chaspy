@@ -124,8 +124,8 @@ public class ConversationFirebaseService {
                         @Override
                         public void onDataChange(@NonNull DataSnapshot userSnapshot) {
                             if (userSnapshot.exists()) {
-                                String firstName = userSnapshot.child("first_name").getValue(String.class);
-                                String lastName = userSnapshot.child("last_name").getValue(String.class);
+                                String firstName = userSnapshot.child("firstName").getValue(String.class);
+                                String lastName = userSnapshot.child("lastName").getValue(String.class);
                                 String friendUsername = firstName + " " + lastName;
                                 String profilePicUrl = userSnapshot.child("profilePicUrl").getValue(String.class);
                                 
