@@ -39,6 +39,18 @@
       "block_list": {}
     }
   },
+  "friend_requests": {
+    "request_id_1": {
+      "receiver_id": "ZKc7glxgeLhDqKTHUUJ1QOUGMj23",
+      "sender_id": "jveRWKkaEVcbdiQuw9MsF4Rfobm2",
+      "status": "pending"
+    },
+    "request_id_2": {
+      "receiver_id": "ZKc7glxgeLhDqKTHUUJ1QOUGMj23",
+      "sender_id": "aU8cY9p37Sg5FbJjtf6s82JFn4l8",
+      "status": "accepted"
+    }
+  },
   "conversations": {
     "a1Xk2z3b4C5D6E7Fg8H9i10J11K12L13M14": {
       "last_message": "Hello, how are you?",
@@ -100,20 +112,6 @@
       "thumb_url": "https://example.com/thumb.jpg",
       "created_at": "1627318000000",
       "updated_at": "1627319000000"
-    }
-  },
-  "friend_requests": {
-    "request_id_1": {
-      "sender_id": "jveRWKkaEVcbdiQuw9MsF4Rfobm2",
-      "receiver_id": "aU8cY9p37Sg5FbJjtf6s82JFn4l8",
-      "status": "pending",
-      "timestamp": "1627318000000"
-    },
-    "request_id_2": {
-      "sender_id": "aU8cY9p37Sg5FbJjtf6s82JFn4l8",
-      "receiver_id": "knSSoOecJIfwphK6tjKbU0beHww2",
-      "status": "accepted",
-      "timestamp": "1627323000000"
     }
   }
 }

@@ -28,10 +28,15 @@ public class UserFirebaseService {
 
     // Save additional user data in Firestore
     public Task<Void> saveUserData(FirebaseUser firebaseUser, String firstName, String lastName) {
-        User user = new User(firstName, lastName, firebaseUser.getEmail());
-        System.out.println(user.toString());
+
+        User user = new User(firebaseUser.getEmail(), firstName, lastName, getDefaultProfilePicUrl(), false);
+        System.out.println(user);
         return usersRef
                 .child(firebaseUser.getUid())
                 .setValue(user);
+    }
+
+    public String getDefaultProfilePicUrl() {
+        return FirebaseDatabase.getInstance().getReference("general_information").child("default_profile").toString();
     }
 }

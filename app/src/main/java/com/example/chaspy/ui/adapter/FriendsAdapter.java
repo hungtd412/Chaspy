@@ -28,7 +28,8 @@ public class FriendsAdapter extends RecyclerView.Adapter<FriendsAdapter.FriendVi
     private OnFriendClickListener listener;
 
     public interface OnFriendClickListener {
-        void onChatButtonClick(FriendItem friend);
+        void onFriendClickListener(FriendItem friend, int position);
+        void onDeleteButtonClick(FriendItem friend, int position);
     }
 
     public FriendsAdapter(Context context, OnFriendClickListener listener) {
@@ -73,10 +74,17 @@ public class FriendsAdapter extends RecyclerView.Adapter<FriendsAdapter.FriendVi
             holder.ivFriendProfilePic.setImageResource(R.drawable.ic_launcher_foreground);
         }
         
-        // Set chat button click listener
-        holder.btnChat.setOnClickListener(v -> {
+        // Set item click listener
+        holder.itemView.setOnClickListener(v -> {
             if (listener != null) {
-                listener.onChatButtonClick(friend);
+                listener.onFriendClickListener(friend, holder.getAdapterPosition());
+            }
+        });
+        
+        // Set delete button click listener
+        holder.ivDelete.setOnClickListener(v -> {
+            if (listener != null) {
+                listener.onDeleteButtonClick(friend, holder.getAdapterPosition());
             }
         });
     }
@@ -87,9 +95,32 @@ public class FriendsAdapter extends RecyclerView.Adapter<FriendsAdapter.FriendVi
     }
 
     public void setFriendsList(List<FriendItem> friendsList) {
-        this.friendsList = friendsList;
+        // Always create new instances to avoid reference issues
+        this.friendsList = new ArrayList<>(friendsList); 
         this.friendsListFull = new ArrayList<>(friendsList);
         notifyDataSetChanged();
+    }
+
+    public void removeFriend(int position) {
+        if (position >= 0 && position < friendsList.size()) {
+            FriendItem removedItem = friendsList.get(position);
+            friendsList.remove(position);
+            
+            // Find and remove the item from the full list as well
+            for (int i = 0; i < friendsListFull.size(); i++) {
+                if (friendsListFull.get(i).getUid().equals(removedItem.getUid())) {
+                    friendsListFull.remove(i);
+                    break;
+                }
+            }
+            
+            notifyItemRemoved(position);
+            
+            // Notify data set changed only if the list is empty
+            if (friendsList.isEmpty()) {
+                notifyDataSetChanged();
+            }
+        }
     }
 
     @Override
@@ -131,14 +162,14 @@ public class FriendsAdapter extends RecyclerView.Adapter<FriendsAdapter.FriendVi
     static class FriendViewHolder extends RecyclerView.ViewHolder {
         TextView tvFriendName, tvFriendEmail, tvStatus;
         ImageView ivFriendProfilePic;
-        Button btnChat;
+        ImageView ivDelete;
 
         FriendViewHolder(@NonNull View itemView) {
             super(itemView);
             tvFriendName = itemView.findViewById(R.id.tvFriendName);
             tvFriendEmail = itemView.findViewById(R.id.tvFriendEmail);
             ivFriendProfilePic = itemView.findViewById(R.id.ivFriendProfilePic);
-            btnChat = itemView.findViewById(R.id.btnChat);
+            ivDelete = itemView.findViewById(R.id.btnRemove);
             tvStatus = itemView.findViewById(R.id.tvStatus);
         }
     }

@@ -19,10 +19,12 @@ public class User {
         // Required empty constructor for Firebase
     }
 
-    public User(String firstName, String lastName, String email) {
+    public User(String email, String firstName, String lastName, String profilePicUrl, boolean isActive) {
         this.firstName = firstName;
         this.lastName = lastName;
         this.email = email;
+        this.profilePicUrl = profilePicUrl;
+        this.isActive = isActive;
     }
 
     public String getUid() {
