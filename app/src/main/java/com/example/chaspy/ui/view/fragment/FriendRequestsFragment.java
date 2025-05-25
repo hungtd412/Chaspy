@@ -25,7 +25,10 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
 public class FriendRequestsFragment extends Fragment implements FriendRequestAdapter.OnRequestActionListener {
     
@@ -151,6 +154,9 @@ public class FriendRequestsFragment extends Fragment implements FriendRequestAda
                     String lastName = dataSnapshot.child("lastName").getValue(String.class);
                     String profilePicUrl = dataSnapshot.child("profilePicUrl").getValue(String.class);
                     
+                    if (firstName == null) firstName = "";
+                    if (lastName == null) lastName = "";
+                    
                     request.setSenderName(firstName + " " + lastName);
                     request.setSenderProfilePicUrl(profilePicUrl);
                     
@@ -159,11 +165,13 @@ public class FriendRequestsFragment extends Fragment implements FriendRequestAda
                     Log.d(TAG, "Added request to list, current size: " + requestsList.size());
                     
                     // Update the adapter with the current list
-                    adapter.setFriendRequests(new ArrayList<>(requestsList));
-                    
-                    // Update empty view after all requests are processed
-                    updateEmptyView(requestsList.isEmpty());
-                    showLoading(false);
+                    if (isAdded() && getContext() != null) {
+                        adapter.setFriendRequests(new ArrayList<>(requestsList));
+                        
+                        // Update empty view after all requests are processed
+                        updateEmptyView(requestsList.isEmpty());
+                        showLoading(false);
+                    }
                 } else {
                     Log.w(TAG, "Sender user data not found for ID: " + request.getSenderId());
                 }
@@ -172,7 +180,9 @@ public class FriendRequestsFragment extends Fragment implements FriendRequestAda
             @Override
             public void onCancelled(@NonNull DatabaseError databaseError) {
                 Log.e(TAG, "Failed to load sender details: " + databaseError.getMessage());
-                Toast.makeText(getContext(), "Failed to load sender details", Toast.LENGTH_SHORT).show();
+                if (getContext() != null) {
+                    Toast.makeText(getContext(), "Failed to load sender details", Toast.LENGTH_SHORT).show();
+                }
                 showLoading(false);
             }
         });
@@ -227,9 +237,85 @@ public class FriendRequestsFragment extends Fragment implements FriendRequestAda
                 Toast.makeText(getContext(), "Friend request accepted", Toast.LENGTH_SHORT).show();
                 adapter.removeFriendRequest(position);
                 updateEmptyView(adapter.getFriendRequests().isEmpty());
+                
+                // Check if a conversation already exists and create a new one if needed
+                checkAndCreateConversation(currentUserId, senderId);
             })
             .addOnFailureListener(e -> Toast.makeText(getContext(), 
                     "Failed to accept request: " + e.getMessage(), Toast.LENGTH_SHORT).show());
+    }
+    
+    /**
+     * Check if a conversation already exists between two users, and create a new one if not
+     * @param currentUserId The current user's ID
+     * @param otherUserId The other user's ID
+     */
+    private void checkAndCreateConversation(String currentUserId, String otherUserId) {
+        DatabaseReference conversationsRef = databaseReference.child("conversations");
+        
+        conversationsRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                boolean conversationExists = false;
+                
+                // Check all existing conversations to see if these users already have one
+                for (DataSnapshot conversationSnapshot : dataSnapshot.getChildren()) {
+                    String user1Id = conversationSnapshot.child("user1_id").getValue(String.class);
+                    String user2Id = conversationSnapshot.child("user2_id").getValue(String.class);
+                    
+                    // Check if these two users are already in a conversation together
+                    // A conversation exists if (user1=current & user2=other) OR (user1=other & user2=current)
+                    if ((currentUserId.equals(user1Id) && otherUserId.equals(user2Id)) || 
+                        (currentUserId.equals(user2Id) && otherUserId.equals(user1Id))) {
+                        conversationExists = true;
+                        Log.d(TAG, "Conversation already exists between users");
+                        break;
+                    }
+                }
+                
+                // If no conversation exists, create a new one
+                if (!conversationExists) {
+                    createNewConversation(currentUserId, otherUserId);
+                }
+            }
+            
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+                Log.e(TAG, "Failed to check for existing conversations: " + databaseError.getMessage());
+            }
+        });
+    }
+    
+    /**
+     * Create a new conversation between two users
+     * @param user1Id The first user's ID
+     * @param user2Id The second user's ID
+     */
+    private void createNewConversation(String user1Id, String user2Id) {
+        // Generate a unique ID for the new conversation
+        String conversationId = UUID.randomUUID().toString().replace("-", "");
+        
+        // Get current timestamp in milliseconds
+        String currentTimeMillis = String.valueOf(System.currentTimeMillis());
+        
+        // Create conversation data object
+        Map<String, Object> conversationData = new HashMap<>();
+        conversationData.put("user1_id", user1Id);
+        conversationData.put("user2_id", user2Id);
+        conversationData.put("last_message", "");
+        conversationData.put("last_message_time", currentTimeMillis);
+        
+        // Add the conversation to the database
+        DatabaseReference conversationsRef = databaseReference.child("conversations").child(conversationId);
+        conversationsRef.setValue(conversationData)
+            .addOnSuccessListener(aVoid -> {
+                Log.d(TAG, "New conversation created successfully");
+                // Initialize empty messages collection for this conversation
+                databaseReference.child("messages").child(conversationId).setValue(new HashMap<>());
+            })
+            .addOnFailureListener(e -> {
+                Log.e(TAG, "Failed to create new conversation: " + e.getMessage());
+            });
     }
     
     @Override

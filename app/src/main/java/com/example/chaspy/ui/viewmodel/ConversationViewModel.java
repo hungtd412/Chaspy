@@ -52,7 +52,15 @@ public class ConversationViewModel extends ViewModel {
         conversationRepository.getConversations(userId, new ConversationRepository.RepositoryCallback() {
             @Override
             public void onSuccess(List<Conversation> conversations) {
-                currentConversations = new ArrayList<>(conversations);
+                // Filter out conversations with empty last messages (additional safety check)
+                List<Conversation> filteredConversations = new ArrayList<>();
+                for (Conversation conversation : conversations) {
+                    if (conversation.getLastMessage() != null && !conversation.getLastMessage().trim().isEmpty()) {
+                        filteredConversations.add(conversation);
+                    }
+                }
+                
+                currentConversations = new ArrayList<>(filteredConversations);
                 sortConversations();
                 conversationsLiveData.setValue(currentConversations);
                 
@@ -128,6 +136,12 @@ public class ConversationViewModel extends ViewModel {
         conversationRepository.startMessageListener(userId, new ConversationRepository.MessageUpdateCallback() {
             @Override
             public void onConversationUpdated(Conversation updatedConversation) {
+                // Additional check for empty messages
+                if (updatedConversation.getLastMessage() == null || 
+                    updatedConversation.getLastMessage().trim().isEmpty()) {
+                    return;
+                }
+                
                 updateConversationList(updatedConversation);
             }
 
