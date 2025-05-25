@@ -29,6 +29,8 @@ public class ConversationFirebaseService {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 List<Conversation> conversations = new ArrayList<>();
+                List<String> pendingConversationIds = new ArrayList<>();
+                
                 for (DataSnapshot conversationSnapshot : snapshot.getChildren()) {
                     String user1Id = conversationSnapshot.child("user1_id").getValue(String.class);
                     String user2Id = conversationSnapshot.child("user2_id").getValue(String.class);
@@ -38,6 +40,11 @@ public class ConversationFirebaseService {
                         String conversationId = conversationSnapshot.getKey();
                         String lastMessage = conversationSnapshot.child("last_message").getValue(String.class);
                         String lastMessageTime = conversationSnapshot.child("last_message_time").getValue(String.class);
+                        
+                        // Skip conversations with null or empty last messages
+                        if (lastMessage == null || lastMessage.trim().isEmpty()) {
+                            continue;
+                        }
                         
                         // Determine the friend's ID (the other user in the conversation)
                         final String friendId = userId.equals(user1Id) ? user2Id : user1Id;
@@ -53,6 +60,7 @@ public class ConversationFirebaseService {
                         );
                         
                         conversations.add(conversation);
+                        pendingConversationIds.add(conversationId);
                         
                         // Fetch the friend's details from the users node
                         usersRef.child(friendId).addListenerForSingleValueEvent(new ValueEventListener() {
@@ -68,8 +76,11 @@ public class ConversationFirebaseService {
                                     conversation.setFriendUsername(friendUsername);
                                     conversation.setProfilePicUrl(profilePicUrl);
                                     
-                                    // Notify the callback that a conversation has been updated
-                                    if (conversations.indexOf(conversation) == conversations.size() - 1) {
+                                    // Remove from pending list
+                                    pendingConversationIds.remove(conversationId);
+                                    
+                                    // If all conversations have been updated, notify callback
+                                    if (pendingConversationIds.isEmpty()) {
                                         callback.onSuccess(conversations);
                                     }
                                 }
@@ -83,8 +94,8 @@ public class ConversationFirebaseService {
                     }
                 }
                 
-                // If no conversations found, return empty list
-                if (conversations.isEmpty()) {
+                // If no conversations found or all were immediately processed
+                if (conversations.isEmpty() || pendingConversationIds.isEmpty()) {
                     callback.onSuccess(conversations);
                 }
             }
@@ -105,6 +116,12 @@ public class ConversationFirebaseService {
                     String user2Id = conversationSnapshot.child("user2_id").getValue(String.class);
                     String lastMessage = conversationSnapshot.child("last_message").getValue(String.class);
                     String lastMessageTime = conversationSnapshot.child("last_message_time").getValue(String.class);
+                    
+                    // Skip conversations with null or empty last messages
+                    if (lastMessage == null || lastMessage.trim().isEmpty()) {
+                        callback.onFailure("Empty last message");
+                        return;
+                    }
                     
                     // Determine friend ID
                     String friendId = currentUserId.equals(user1Id) ? user2Id : user1Id;
@@ -157,6 +174,11 @@ public class ConversationFirebaseService {
     }
     
     public void updateConversation(String conversationId, String lastMessage, String timestamp) {
+        // Skip updating if the message is empty
+        if (lastMessage == null || lastMessage.trim().isEmpty()) {
+            return;
+        }
+        
         Map<String, Object> updates = new HashMap<>();
         updates.put("last_message", lastMessage);
         updates.put("last_message_time", timestamp);

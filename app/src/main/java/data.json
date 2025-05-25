@@ -113,5 +113,8 @@
       "created_at": "1627318000000",
       "updated_at": "1627319000000"
     }
+  },
+  "general_information": {
+    "default_avatar": "https://res.cloudinary.com/dlmzsfwcf/image/upload/v1748180569/default_profile_d340av.png"
   }
 }

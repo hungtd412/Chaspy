@@ -58,6 +58,11 @@ public class ConversationRepository {
         messageListener.startListening(userId, new MessageListener.MessageUpdateCallback() {
             @Override
             public void onNewMessage(String conversationId, String message, String timestamp, String senderId) {
+                // Skip empty messages
+                if (message == null || message.trim().isEmpty()) {
+                    return;
+                }
+                
                 // Update the conversation in Firebase
                 conversationService.updateConversation(conversationId, message, timestamp);
                 
@@ -72,7 +77,10 @@ public class ConversationRepository {
 
                         @Override
                         public void onFailure(String error) {
-                            callback.onError(error);
+                            // Don't propagate errors for empty messages
+                            if (!error.equals("Empty last message")) {
+                                callback.onError(error);
+                            }
                         }
                     });
             }
