@@ -7,15 +7,22 @@ import com.google.android.gms.tasks.Task;
 import com.example.chaspy.data.model.User;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.android.gms.tasks.TaskCompletionSource;
 
 public class UserFirebaseService {
 
     private static FirebaseAuth firebaseAuth;
     private static DatabaseReference usersRef;
+    private static String defaultAvatarUrl = ""; // Cache the default avatar URL
 
     public UserFirebaseService() {
         firebaseAuth = FirebaseAuth.getInstance();
         usersRef = FirebaseDatabase.getInstance().getReference("users");
+        // Initialize default avatar URL
+        fetchDefaultAvatarUrl();
     }
 
     public Task<AuthResult> registerUser(String email, String password) {
@@ -28,9 +35,69 @@ public class UserFirebaseService {
 
     // Save additional user data in Firestore
     public Task<Void> saveUserData(FirebaseUser firebaseUser, String firstName, String lastName) {
-        User user = new User(firstName, lastName, firebaseUser.getEmail());
-        return usersRef
-                .child(firebaseUser.getUid())
-                .setValue(user);
+        // Get default avatar URL asynchronously
+        return getDefaultProfilePicUrl().continueWithTask(task -> {
+            if (task.isSuccessful()) {
+                String avatarUrl = task.getResult();
+                User user = new User(firebaseUser.getEmail(), firstName, lastName, avatarUrl, false);
+                System.out.println(user);
+                return usersRef
+                        .child(firebaseUser.getUid())
+                        .setValue(user);
+            } else {
+                throw task.getException();
+            }
+        });
+    }
+
+    // Fetch and cache the default avatar URL
+    private void fetchDefaultAvatarUrl() {
+        DatabaseReference defaultAvatarRef = FirebaseDatabase.getInstance().getReference("general_information").child("default_avatar");
+        defaultAvatarRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                if (dataSnapshot.exists()) {
+                    defaultAvatarUrl = dataSnapshot.getValue(String.class);
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+                System.err.println("Error fetching default avatar URL: " + databaseError.getMessage());
+            }
+        });
+    }
+
+    // Get the default profile picture URL (as a Task to handle asynchronous nature)
+    public Task<String> getDefaultProfilePicUrl() {
+        TaskCompletionSource<String> taskCompletionSource = new TaskCompletionSource<>();
+        
+        // If we already have the default avatar URL cached, return it immediately
+        if (!defaultAvatarUrl.isEmpty()) {
+            taskCompletionSource.setResult(defaultAvatarUrl);
+            return taskCompletionSource.getTask();
+        }
+        
+        // Otherwise, fetch it from the database
+        DatabaseReference defaultAvatarRef = FirebaseDatabase.getInstance().getReference("general_information").child("default_avatar");
+        defaultAvatarRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                if (dataSnapshot.exists()) {
+                    String url = dataSnapshot.getValue(String.class);
+                    defaultAvatarUrl = url; // Cache the URL
+                    taskCompletionSource.setResult(url);
+                } else {
+                    taskCompletionSource.setResult(""); // Return empty string if not found
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+                taskCompletionSource.setException(databaseError.toException());
+            }
+        });
+        
+        return taskCompletionSource.getTask();
     }
 }

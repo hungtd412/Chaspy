@@ -14,33 +14,29 @@
         android:theme="@style/Theme.Chaspy"
         tools:targetApi="31">
 
-        <!-- SignUpActivity -->
         <activity
-            android:name=".ui.view.ChatActivity"
+            android:name=".ui.view.SignUpActivity"
             android:exported="true">
+
         </activity>
 
-        <!-- ConversationsActivity -->
         <activity
             android:name=".ui.view.SignInActivity"
             android:exported="true">
+
         </activity>
 
-        <!-- SettingActivity -->
         <activity
-            android:name=".ui.view.ConversationsActivity"
+            android:name=".ui.view.ConversationActivity"
             android:exported="true">
-        </activity>
 
-        <!-- ChatActivity -->
-        <activity
-            android:name=".ui.view.SettingActivity"
-            android:exported="true">
         </activity>
-        <!-- MainActivity (nếu có dùng sau login) -->
         <activity
-            android:name=".ui.view.SignUpActivity"
-            android:windowSoftInputMode="adjustPan"
+            android:name=".ui.view.ChatActivity"
+            android:exported="true" />
+
+        <activity
+            android:name=".ui.view.FriendsActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -48,4 +44,5 @@
             </intent-filter>
         </activity>
     </application>
+
 </manifest>
