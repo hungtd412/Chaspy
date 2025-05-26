@@ -1,46 +1,60 @@
 package com.example.chaspy.data.model;
 
+import com.google.firebase.database.PropertyName;
+
 public class FriendRequest {
-    private String requestId;
-    private String senderId;
-    private String receiverId;
+    private String request_id;
+    private String sender_id;
+    private String receiver_id;
     private String status;
-    private String senderName;
-    private String senderProfilePicUrl;
+    private String sender_name;
+    private String sender_profile_pic_url;
 
     public FriendRequest() {
         // Required empty constructor for Firebase
     }
 
-    public FriendRequest(String requestId, String senderId, String receiverId, String status) {
-        this.requestId = requestId;
-        this.senderId = senderId;
-        this.receiverId = receiverId;
+    public FriendRequest(String sender_id, String receiver_id, String status) {
+        this.sender_id = sender_id;
+        this.receiver_id = receiver_id;
         this.status = status;
     }
 
+    public FriendRequest(String request_id, String sender_id, String receiver_id, String status) {
+        this.request_id = request_id;
+        this.sender_id = sender_id;
+        this.receiver_id = receiver_id;
+        this.status = status;
+    }
+
+    // Getter and setters with @PropertyName annotations to map between Java and Firebase naming
+    
     public String getRequestId() {
-        return requestId;
+        return request_id;
     }
 
-    public void setRequestId(String requestId) {
-        this.requestId = requestId;
+    public void setRequestId(String request_id) {
+        this.request_id = request_id;
     }
 
+    @PropertyName("sender_id")
     public String getSenderId() {
-        return senderId;
+        return sender_id;
     }
 
-    public void setSenderId(String senderId) {
-        this.senderId = senderId;
+    @PropertyName("sender_id")
+    public void setSenderId(String sender_id) {
+        this.sender_id = sender_id;
     }
 
+    @PropertyName("receiver_id")
     public String getReceiverId() {
-        return receiverId;
+        return receiver_id;
     }
 
-    public void setReceiverId(String receiverId) {
-        this.receiverId = receiverId;
+    @PropertyName("receiver_id")
+    public void setReceiverId(String receiver_id) {
+        this.receiver_id = receiver_id;
     }
 
     public String getStatus() {
@@ -52,18 +66,18 @@ public class FriendRequest {
     }
 
     public String getSenderName() {
-        return senderName;
+        return sender_name;
     }
 
-    public void setSenderName(String senderName) {
-        this.senderName = senderName;
+    public void setSenderName(String sender_name) {
+        this.sender_name = sender_name;
     }
 
     public String getSenderProfilePicUrl() {
-        return senderProfilePicUrl;
+        return sender_profile_pic_url;
     }
 
-    public void setSenderProfilePicUrl(String senderProfilePicUrl) {
-        this.senderProfilePicUrl = senderProfilePicUrl;
+    public void setSenderProfilePicUrl(String sender_profile_pic_url) {
+        this.sender_profile_pic_url = sender_profile_pic_url;
     }
 }

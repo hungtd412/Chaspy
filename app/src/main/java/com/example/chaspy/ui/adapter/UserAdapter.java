@@ -4,8 +4,10 @@ import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
@@ -15,14 +17,41 @@ import com.example.chaspy.data.model.User;
 import com.squareup.picasso.Picasso;
 
 import java.util.ArrayList;
+import java.util.Map;
 
 public class UserAdapter extends RecyclerView.Adapter<UserAdapter.UserViewHolder> {
     Context mainActivity;
     ArrayList<User> usersArrayList;
-
+    private OnAddFriendClickListener addFriendListener;
+    
+    // Maps to track friend request states
+    private Map<String, Boolean> sentFriendRequests;
+    private Map<String, Boolean> receivedFriendRequests;
+    
+    // Interface for handling friend request button clicks
+    public interface OnAddFriendClickListener {
+        void onAddFriendClick(User user, int position);
+    }
+    
     public UserAdapter(Context mainActivity, ArrayList<User> usersArrayList) {
         this.mainActivity = mainActivity;
         this.usersArrayList = usersArrayList;
+    }
+    
+    // Set the listener for add friend button clicks
+    public void setOnAddFriendClickListener(OnAddFriendClickListener listener) {
+        this.addFriendListener = listener;
+    }
+    
+    /**
+     * Update the button states based on friend request status
+     * @param sent Map of sent friend requests
+     * @param received Map of received friend requests
+     */
+    public void updateButtonStates(Map<String, Boolean> sent, Map<String, Boolean> received) {
+        this.sentFriendRequests = sent;
+        this.receivedFriendRequests = received;
+        notifyDataSetChanged();
     }
 
     @NonNull
@@ -36,17 +65,35 @@ public class UserAdapter extends RecyclerView.Adapter<UserAdapter.UserViewHolder
     public void onBindViewHolder(@NonNull UserViewHolder holder, int position) {
         User user = usersArrayList.get(position);
         holder.getUserName().setText(user.getUserName());
-        holder.getUserStatus().setText(user.getUid());
+        
+        // Hide or repurpose userStatus - we don't show email anymore
+        holder.getUserStatus().setVisibility(View.GONE);
+        
+        // Load the user's profile image
         Picasso.get().load(user.getProfilePicUrl()).into(holder.getUserImg());
-
-        holder.itemView.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-//                Intent intent = new Intent(mainActivity, ChatWindow.class);
-//                intent.putExtra("nameeee", user.getUserName());
-//                intent.putExtra("reciverImg", user.getProfilePicUrl());
-//                intent.putExtra("uid", user.getUserId());
-//                mainActivity.startActivity(intent);
+        
+        // Set button state based on friend request status
+        if (sentFriendRequests != null && sentFriendRequests.containsKey(user.getUid())) {
+            // Request already sent
+            Button btnAddFriend = holder.getAddFriendButton();
+            btnAddFriend.setText("Pending");
+            btnAddFriend.setEnabled(false);
+        } else if (receivedFriendRequests != null && receivedFriendRequests.containsKey(user.getUid())) {
+            // Request received from this user
+            Button btnAddFriend = holder.getAddFriendButton();
+            btnAddFriend.setText("Respond");
+            btnAddFriend.setEnabled(false); // Disable direct add - they should go to requests tab
+        } else {
+            // No requests, normal state
+            Button btnAddFriend = holder.getAddFriendButton();
+            btnAddFriend.setText("Add");
+            btnAddFriend.setEnabled(true);
+        }
+        
+        // Setup add friend button click
+        holder.getAddFriendButton().setOnClickListener(view -> {
+            if (addFriendListener != null) {
+                addFriendListener.onAddFriendClick(user, position);
             }
         });
     }
@@ -59,12 +106,14 @@ public class UserAdapter extends RecyclerView.Adapter<UserAdapter.UserViewHolder
     public static class UserViewHolder extends RecyclerView.ViewHolder {
         private ImageView userImg;
         private TextView userName, userStatus;
+        private Button btnAddFriend;
 
         public UserViewHolder(@NonNull View itemView) {
             super(itemView);
             userImg = itemView.findViewById(R.id.userImg);
             userName = itemView.findViewById(R.id.userName);
             userStatus = itemView.findViewById(R.id.userStatus);
+            btnAddFriend = itemView.findViewById(R.id.btnAddFriend);
         }
 
         public ImageView getUserImg() {
@@ -77,6 +126,10 @@ public class UserAdapter extends RecyclerView.Adapter<UserAdapter.UserViewHolder
 
         public TextView getUserStatus() {
             return userStatus;
+        }
+        
+        public Button getAddFriendButton() {
+            return btnAddFriend;
         }
     }
 }
