@@ -6,6 +6,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ProgressBar;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -17,9 +18,10 @@ import com.example.chaspy.ui.viewmodel.SignUpViewModel;
 public class SignUpActivity extends AppCompatActivity {
 
     private EditText etFirstName, etLastName, etUsername, etPassword, etConfirmPassword;
-    private Button btnSignUp, btnLogin;
+    private Button btnSignUp;
+    private TextView tvLogin;
     private ProgressBar progressBar;
-    
+
     private SignUpViewModel signUpViewModel;
 
     @Override
@@ -37,7 +39,7 @@ public class SignUpActivity extends AppCompatActivity {
         etPassword = findViewById(R.id.et_password);
         etConfirmPassword = findViewById(R.id.et_confirm_password);
         btnSignUp = findViewById(R.id.btn_sign_up);
-        btnLogin = findViewById(R.id.btn_login);
+        tvLogin = findViewById(R.id.tv_login);
         progressBar = findViewById(R.id.progressBar);
 
         // Set up observers
@@ -58,21 +60,21 @@ public class SignUpActivity extends AppCompatActivity {
 
             // Show progress indicator
             progressBar.setVisibility(View.VISIBLE);
-            
+
             String email = username + "@gmail.com";
-            
+
             // Call ViewModel to handle registration
             signUpViewModel.registerUser(email, password, firstName, lastName);
         });
-        
-        // Set click listener for login button to navigate to SignInActivity
-        btnLogin.setOnClickListener(view -> {
+
+        // Set click listener for login text to navigate to SignInActivity
+        tvLogin.setOnClickListener(view -> {
             Intent intent = new Intent(SignUpActivity.this, SignInActivity.class);
             startActivity(intent);
             finish(); // Close current activity
         });
     }
-    
+
     private void setupObservers() {
         // Observe registration success
         signUpViewModel.getIsUserRegistered().observe(this, isRegistered -> {

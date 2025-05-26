@@ -45,7 +45,8 @@
                 android:src="@drawable/background_parrot"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
+                app:layout_constraintTop_toTopOf="parent"
+                android:layout_marginTop="30dp"/>
 
             <TextView
                 android:id="@+id/txtUsername"
@@ -140,7 +141,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_marginHorizontal="12dp"
-                android:background="@android:color/white"
+                android:background="@drawable/edit_text_chat"
                 android:paddingStart="16dp"
                 android:paddingTop="10dp"
                 android:paddingEnd="16dp"

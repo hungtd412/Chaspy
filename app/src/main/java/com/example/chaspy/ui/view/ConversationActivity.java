@@ -2,9 +2,12 @@ package com.example.chaspy.ui.view;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
+import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.SearchView;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -20,13 +23,13 @@ import com.google.firebase.auth.FirebaseUser;
 
 import java.util.List;
 
-public class ConversationActivity extends AppCompatActivity implements SearchView.OnQueryTextListener {
+public class ConversationActivity extends AppCompatActivity {
 
     private RecyclerView recyclerView;
     private ConversationAdapter adapter;
     private ConversationViewModel mainViewModel;
     private SwipeRefreshLayout swipeRefreshLayout;
-    private SearchView searchView;
+    private EditText searchEditText;
     private String currentUserId;
     private boolean isFirstLoad = true;
 
@@ -38,18 +41,24 @@ public class ConversationActivity extends AppCompatActivity implements SearchVie
         // Initialize RecyclerView
         recyclerView = findViewById(R.id.recyclerViewConversations);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
-        
+
         // Initialize SwipeRefreshLayout
         swipeRefreshLayout = findViewById(R.id.swipeRefreshLayout);
-        
-        // Initialize SearchView with improved configuration
-        searchView = findViewById(R.id.searchView);
-        searchView.setIconifiedByDefault(false);
-        searchView.setClickable(true);
-        searchView.setOnQueryTextListener(this);
-        
-        // Make entire search view area clickable
-        searchView.setOnClickListener(v -> searchView.setIconified(false));
+
+        // Initialize Search EditText with TextWatcher
+        searchEditText = findViewById(R.id.searchView);
+        searchEditText.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                mainViewModel.filterConversations(s.toString());
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {}
+        });
 
         // Initialize ViewModel
         mainViewModel = new ViewModelProvider(this).get(ConversationViewModel.class);
@@ -69,6 +78,14 @@ public class ConversationActivity extends AppCompatActivity implements SearchVie
         });
         recyclerView.setAdapter(adapter);
 
+        // Set up Settings button click listener
+        ImageButton btnSettings = findViewById(R.id.btn_settings);
+        btnSettings.setOnClickListener(view -> {
+            // Navigate to FriendsActivity
+            Intent intent = new Intent(ConversationActivity.this, FriendsActivity.class);
+            startActivity(intent);
+        });
+
         // Observe LiveData from ViewModel
         mainViewModel.getConversations().observe(this, new Observer<List<Conversation>>() {
             @Override
@@ -84,7 +101,7 @@ public class ConversationActivity extends AppCompatActivity implements SearchVie
                 }
             }
         });
-        
+
         // Observe filtered conversations
         mainViewModel.getFilteredConversations().observe(this, new Observer<List<Conversation>>() {
             @Override
@@ -104,7 +121,7 @@ public class ConversationActivity extends AppCompatActivity implements SearchVie
         // Get current user ID
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
         currentUserId = user != null ? user.getUid() : null;
-        
+
         // Set up swipe to refresh
         swipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
@@ -112,11 +129,11 @@ public class ConversationActivity extends AppCompatActivity implements SearchVie
                 refreshConversations();
             }
         });
-        
+
         // Load initial conversations
         loadConversations();
     }
-    
+
     private void loadConversations() {
         if (currentUserId != null) {
             swipeRefreshLayout.setRefreshing(true);
@@ -125,21 +142,21 @@ public class ConversationActivity extends AppCompatActivity implements SearchVie
             Toast.makeText(this, "Error: User not authenticated", Toast.LENGTH_SHORT).show();
         }
     }
-    
+
     private void refreshConversations() {
         if (currentUserId != null) {
             // Reset first load flag to prevent flickering during manual refresh
             isFirstLoad = false;
             mainViewModel.loadConversations(currentUserId);
-            
+
             // Clear search
-            searchView.setQuery("", false);
-            searchView.clearFocus();
+            searchEditText.setText("");
+            searchEditText.clearFocus();
         } else {
             swipeRefreshLayout.setRefreshing(false);
         }
     }
-    
+
     @Override
     protected void onResume() {
         super.onResume();
@@ -153,18 +170,5 @@ public class ConversationActivity extends AppCompatActivity implements SearchVie
     protected void onPause() {
         super.onPause();
         // The ViewModel will continue to listen for updates
-    }
-    
-    // SearchView query text listener implementations
-    @Override
-    public boolean onQueryTextSubmit(String query) {
-        mainViewModel.filterConversations(query);
-        return true;
-    }
-
-    @Override
-    public boolean onQueryTextChange(String newText) {
-        mainViewModel.filterConversations(newText);
-        return true;
     }
 }
