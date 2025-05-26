@@ -10,6 +10,7 @@ import androidx.viewpager2.widget.ViewPager2;
 
 import com.example.chaspy.R;
 import com.example.chaspy.ui.adapter.FriendsTabAdapter;
+import com.example.chaspy.ui.view.fragment.AddFriendsFragment;
 import com.example.chaspy.ui.view.fragment.FriendRequestsFragment;
 import com.example.chaspy.ui.view.fragment.FriendsListFragment;
 import com.google.android.material.tabs.TabLayout;
@@ -146,21 +147,30 @@ public class FriendsActivity extends AppCompatActivity {
     }
     
     private void searchFriends(String query) {
+        // Trim the query to remove any leading or trailing whitespace
+        String trimmedQuery = (query != null) ? query.trim() : "";
+        
         // Get current fragment and pass the query
         int currentTabPosition = viewPagerFriends.getCurrentItem();
         
         // Pass search query to appropriate fragment
-        if (currentTabPosition == 1) { // Friend requests tab
+        if (currentTabPosition == 0) { // Add friends tab
+            AddFriendsFragment addFriendsFragment = 
+                    (AddFriendsFragment) tabAdapter.getFragmentAt(currentTabPosition);
+            if (addFriendsFragment != null) {
+                addFriendsFragment.searchUsers(trimmedQuery);
+            }
+        } else if (currentTabPosition == 1) { // Friend requests tab
             FriendRequestsFragment requestsFragment = 
                     (FriendRequestsFragment) tabAdapter.getFragmentAt(currentTabPosition);
             if (requestsFragment != null) {
-                requestsFragment.searchRequests(query);
+                requestsFragment.searchRequests(trimmedQuery);
             }
         } else if (currentTabPosition == 2) { // Friends tab
             FriendsListFragment friendsFragment = 
                     (FriendsListFragment) tabAdapter.getFragmentAt(currentTabPosition);
             if (friendsFragment != null) {
-                friendsFragment.filterFriends(query);
+                friendsFragment.filterFriends(trimmedQuery);
             }
         }
     }
