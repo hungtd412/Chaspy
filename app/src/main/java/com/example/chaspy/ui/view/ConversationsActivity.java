@@ -30,7 +30,7 @@ public class ConversationsActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_conversations);
 
-        recyclerView = findViewById(R.id.recyclerViewConversations);
+        recyclerView = findViewById(R.id.recycler_view_conversations);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
 
         // Initialize conversation list

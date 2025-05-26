@@ -36,195 +36,216 @@
         android:orientation="vertical"
         android:background="@drawable/signup_content_background"
         android:paddingTop="16dp"
-        android:paddingBottom="16dp"
-        android:gravity="center_horizontal">
+        android:paddingBottom="16dp">
 
         <ImageView
             android:id="@+id/iv_logo"
-            android:layout_width="100dp"
-            android:layout_height="100dp"
+            android:layout_width="80dp"
+            android:layout_height="80dp"
             android:src="@drawable/chaspy_logo_1"
             android:contentDescription="Logo"
-            android:layout_marginBottom="0dp" />
+            android:layout_gravity="center_horizontal"
+            android:layout_marginBottom="8dp" />
 
-        <LinearLayout
-            android:layout_width="300dp"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:layout_marginBottom="8dp">
+        <ScrollView
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:fillViewport="true">
 
-            <TextView
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="First name"
-                android:textColor="#343A69"
-                android:textSize="14sp"
-                android:layout_marginBottom="4dp"/>
+                android:orientation="vertical"
+                android:gravity="center_horizontal">
 
-            <EditText
-                android:id="@+id/et_first_name"
-                android:layout_width="match_parent"
-                android:layout_height="45dp"
-                android:background="@drawable/edit_text_sign_up"
-                android:paddingHorizontal="8dp"
-                android:textColor="#000000"
-                android:textColorHint="#2C2C6B"
-                android:textSize="14sp"/>
-        </LinearLayout>
+                <LinearLayout
+                    android:layout_width="300dp"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:layout_marginBottom="8dp">
 
-        <LinearLayout
-            android:layout_width="300dp"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:layout_marginBottom="8dp">
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="First name"
+                        android:textColor="#343A69"
+                        android:textSize="14sp"
+                        android:layout_marginBottom="4dp"/>
 
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Last name"
-                android:textColor="#343A69"
-                android:textSize="14sp"
-                android:layout_marginBottom="4dp"/>
+                    <EditText
+                        android:id="@+id/et_first_name"
+                        android:layout_width="match_parent"
+                        android:layout_height="45dp"
+                        android:background="@drawable/edit_text_sign_up"
+                        android:paddingHorizontal="12dp"
+                        android:gravity="center_vertical"
+                        android:textColor="#000000"
+                        android:textColorHint="#2C2C6B"
+                        android:textSize="14sp"/>
+                </LinearLayout>
 
-            <EditText
-                android:id="@+id/et_last_name"
-                android:layout_width="match_parent"
-                android:layout_height="45dp"
-                android:background="@drawable/edit_text_sign_up"
-                android:paddingHorizontal="8dp"
-                android:textColor="#000000"
-                android:textColorHint="#2C2C6B"
-                android:textSize="14sp"/>
-        </LinearLayout>
+                <LinearLayout
+                    android:layout_width="300dp"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:layout_marginBottom="8dp">
 
-        <LinearLayout
-            android:layout_width="300dp"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:layout_marginBottom="8dp">
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Last name"
+                        android:textColor="#343A69"
+                        android:textSize="14sp"
+                        android:layout_marginBottom="4dp"/>
 
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Username"
-                android:textColor="#343A69"
-                android:textSize="14sp"
-                android:layout_marginBottom="4dp"/>
+                    <EditText
+                        android:id="@+id/et_last_name"
+                        android:layout_width="match_parent"
+                        android:layout_height="45dp"
+                        android:background="@drawable/edit_text_sign_up"
+                        android:paddingHorizontal="12dp"
+                        android:gravity="center_vertical"
+                        android:textColor="#000000"
+                        android:textColorHint="#2C2C6B"
+                        android:textSize="14sp"/>
+                </LinearLayout>
 
-            <EditText
-                android:id="@+id/et_username"
-                android:layout_width="match_parent"
-                android:layout_height="45dp"
-                android:background="@drawable/edit_text_sign_up"
-                android:paddingHorizontal="8dp"
-                android:textColor="#000000"
-                android:textColorHint="#2C2C6B"
-                android:textSize="14sp"/>
-        </LinearLayout>
+                <LinearLayout
+                    android:layout_width="300dp"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:layout_marginBottom="8dp">
 
-        <LinearLayout
-            android:layout_width="300dp"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:layout_marginBottom="8dp">
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Username"
+                        android:textColor="#343A69"
+                        android:textSize="14sp"
+                        android:layout_marginBottom="4dp"/>
 
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Email"
-                android:textColor="#343A69"
-                android:textSize="14sp"
-                android:layout_marginBottom="4dp"/>
+                    <EditText
+                        android:id="@+id/et_username"
+                        android:layout_width="match_parent"
+                        android:layout_height="45dp"
+                        android:background="@drawable/edit_text_sign_up"
+                        android:paddingHorizontal="12dp"
+                        android:gravity="center_vertical"
+                        android:textColor="#000000"
+                        android:textColorHint="#2C2C6B"
+                        android:textSize="14sp"/>
+                </LinearLayout>
 
-            <EditText
-                android:id="@+id/et_email"
-                android:layout_width="match_parent"
-                android:layout_height="45dp"
-                android:inputType="textEmailAddress"
-                android:background="@drawable/edit_text_sign_up"
-                android:paddingHorizontal="8dp"
-                android:textColor="#000000"
-                android:textColorHint="#2C2C6B"
-                android:textSize="14sp"/>
-        </LinearLayout>
+                <LinearLayout
+                    android:layout_width="300dp"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:layout_marginBottom="8dp">
 
-        <LinearLayout
-            android:layout_width="300dp"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:layout_marginBottom="8dp">
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Email"
+                        android:textColor="#343A69"
+                        android:textSize="14sp"
+                        android:layout_marginBottom="4dp"/>
 
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Password"
-                android:textColor="#343A69"
-                android:textSize="14sp"
-                android:layout_marginBottom="4dp"/>
+                    <EditText
+                        android:id="@+id/et_email"
+                        android:layout_width="match_parent"
+                        android:layout_height="45dp"
+                        android:inputType="textEmailAddress"
+                        android:background="@drawable/edit_text_sign_up"
+                        android:paddingHorizontal="12dp"
+                        android:gravity="center_vertical"
+                        android:textColor="#000000"
+                        android:textColorHint="#2C2C6B"
+                        android:textSize="14sp"/>
+                </LinearLayout>
 
-            <EditText
-                android:id="@+id/et_password"
-                android:layout_width="match_parent"
-                android:layout_height="45dp"
-                android:inputType="textPassword"
-                android:background="@drawable/edit_text_sign_up"
-                android:paddingHorizontal="8dp"
-                android:textColor="#000000"
-                android:textColorHint="#2C2C6B"
-                android:textSize="14sp"/>
-        </LinearLayout>
+                <LinearLayout
+                    android:layout_width="300dp"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:layout_marginBottom="8dp">
 
-        <LinearLayout
-            android:layout_width="300dp"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:layout_marginBottom="16dp">
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Password"
+                        android:textColor="#343A69"
+                        android:textSize="14sp"
+                        android:layout_marginBottom="4dp"/>
 
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Confirm password"
-                android:textColor="#343A69"
-                android:textSize="14sp"
-                android:layout_marginBottom="4dp"/>
+                    <EditText
+                        android:id="@+id/et_password"
+                        android:layout_width="match_parent"
+                        android:layout_height="45dp"
+                        android:inputType="textPassword"
+                        android:background="@drawable/edit_text_sign_up"
+                        android:paddingHorizontal="12dp"
+                        android:gravity="center_vertical"
+                        android:textColor="#000000"
+                        android:textColorHint="#2C2C6B"
+                        android:textSize="14sp"/>
+                </LinearLayout>
 
-            <EditText
-                android:id="@+id/et_confirm_password"
-                android:layout_width="match_parent"
-                android:layout_height="45dp"
-                android:inputType="textPassword"
-                android:background="@drawable/edit_text_sign_up"
-                android:paddingHorizontal="8dp"
-                android:textColor="#000000"
-                android:textColorHint="#2C2C6B"
-                android:textSize="14sp"/>
-        </LinearLayout>
+                <LinearLayout
+                    android:layout_width="300dp"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:layout_marginBottom="20dp">
 
-        <Button
-            android:id="@+id/btn_sign_up"
-            android:layout_width="150dp"
-            android:layout_height="45dp"
-            android:backgroundTint="#92E8F3"
-            android:background="@drawable/button_background"
-            android:text="SIGN UP"
-            android:textSize="16sp"
-            android:textStyle="bold"
-            android:textColor="#FFFFFF"
-            android:layout_marginBottom="16dp"/>
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Confirm password"
+                        android:textColor="#343A69"
+                        android:textSize="14sp"
+                        android:layout_marginBottom="4dp"/>
 
-        <TextView
-            android:id="@+id/tv_login"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Log in"
-            android:textColor="#2C2C6B"
-            android:textSize="16sp"/>
+                    <EditText
+                        android:id="@+id/et_confirm_password"
+                        android:layout_width="match_parent"
+                        android:layout_height="45dp"
+                        android:inputType="textPassword"
+                        android:background="@drawable/edit_text_sign_up"
+                        android:paddingHorizontal="12dp"
+                        android:gravity="center_vertical"
+                        android:textColor="#000000"
+                        android:textColorHint="#2C2C6B"
+                        android:textSize="14sp"/>
+                </LinearLayout>
+
+                <Button
+                    android:id="@+id/btn_sign_up"
+                    android:layout_width="150dp"
+                    android:layout_height="45dp"
+                    android:backgroundTint="#92E8F3"
+                    android:background="@drawable/button_background"
+                    android:text="SIGN UP"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    android:textColor="#FFFFFF"
+                    android:layout_marginBottom="16dp"/>
+
+                <TextView
+                    android:id="@+id/tv_login"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Log in"
+                    android:textColor="#2C2C6B"
+                    android:textSize="16sp"
+                    android:layout_marginBottom="8dp"/>
+            </LinearLayout>
+        </ScrollView>
 
         <ProgressBar
             android:id="@+id/progressBar"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:visibility="gone"
-            android:layout_centerInParent="true" />
+            android:layout_gravity="center_horizontal" />
     </LinearLayout>
 </FrameLayout>
