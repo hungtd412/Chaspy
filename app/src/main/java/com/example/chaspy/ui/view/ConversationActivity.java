@@ -1,8 +1,11 @@
 package com.example.chaspy.ui.view;
 
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
+import android.widget.ImageButton;
 import android.widget.Toast;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.SearchView;
 import androidx.lifecycle.Observer;
@@ -12,6 +15,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.example.chaspy.R;
+import com.example.chaspy.data.manager.SharedPreferencesManager;
 import com.example.chaspy.data.model.Conversation;
 import com.example.chaspy.ui.adapter.ConversationAdapter;
 import com.example.chaspy.ui.viewmodel.ConversationViewModel;
@@ -27,13 +31,18 @@ public class ConversationActivity extends AppCompatActivity implements SearchVie
     private ConversationViewModel mainViewModel;
     private SwipeRefreshLayout swipeRefreshLayout;
     private SearchView searchView;
+    private ImageButton btnLogout;
     private String currentUserId;
     private boolean isFirstLoad = true;
+    private SharedPreferencesManager preferencesManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_conversations);
+
+        // Initialize SharedPreferencesManager
+        preferencesManager = new SharedPreferencesManager(this);
 
         // Initialize RecyclerView
         recyclerView = findViewById(R.id.recyclerViewConversations);
@@ -50,6 +59,10 @@ public class ConversationActivity extends AppCompatActivity implements SearchVie
         
         // Make entire search view area clickable
         searchView.setOnClickListener(v -> searchView.setIconified(false));
+        
+        // Initialize logout button
+        btnLogout = findViewById(R.id.btnLogout);
+        btnLogout.setOnClickListener(v -> showLogoutConfirmationDialog());
 
         // Initialize ViewModel
         mainViewModel = new ViewModelProvider(this).get(ConversationViewModel.class);
@@ -115,6 +128,37 @@ public class ConversationActivity extends AppCompatActivity implements SearchVie
         
         // Load initial conversations
         loadConversations();
+    }
+    
+    private void showLogoutConfirmationDialog() {
+        new AlertDialog.Builder(this)
+                .setTitle("Logout")
+                .setMessage("Are you sure you want to logout?")
+                .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        logout();
+                    }
+                })
+                .setNegativeButton("No", null)
+                .show();
+    }
+    
+    private void logout() {
+        // Sign out from Firebase Auth
+        FirebaseAuth.getInstance().signOut();
+        
+        // Only set logged out status without clearing credentials
+        preferencesManager.setLoggedOut();
+        
+        // Show logout message
+        Toast.makeText(this, "You have been logged out", Toast.LENGTH_SHORT).show();
+        
+        // Navigate to SignInActivity and clear back stack
+        Intent intent = new Intent(ConversationActivity.this, SignInActivity.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        startActivity(intent);
+        finish();
     }
     
     private void loadConversations() {
