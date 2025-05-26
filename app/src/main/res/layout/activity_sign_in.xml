@@ -50,7 +50,7 @@
             android:id="@+id/tv_email_label"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Email"
+            android:text="Username"
             android:textColor="#FFFFFF"
             android:textSize="18sp"
             app:layout_constraintStart_toStartOf="parent"
@@ -58,12 +58,12 @@
 
         <!-- Email Input -->
         <EditText
-            android:id="@+id/et_email"
+            android:id="@+id/et_username"
             android:layout_width="0dp"
             android:layout_height="48dp"
             android:layout_marginTop="8dp"
             android:background="@drawable/edit_text_background"
-            android:hint="Enter your email"
+            android:hint="Enter your username"
             android:textSize="16sp"
             android:inputType="textEmailAddress"
             android:paddingStart="16dp"
@@ -84,7 +84,7 @@
             android:textColor="#FFFFFF"
             android:textSize="18sp"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/et_email" />
+            app:layout_constraintTop_toBottomOf="@id/et_username" />
 
         <!-- Password Input -->
         <EditText
@@ -103,6 +103,19 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/tv_password_label" />
+
+        <!-- Remember Account Checkbox -->
+        <CheckBox
+            android:id="@+id/cb_remember_account"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="Remember account"
+            android:textColor="#F6F3F3"
+            android:textSize="14sp"
+            android:buttonTint="#F6F3F3"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/et_password" />
 
         <!-- Forgot Password -->
         <TextView
@@ -130,7 +143,7 @@
             android:textStyle="bold"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/tv_forgot_password"
+            app:layout_constraintTop_toBottomOf="@id/cb_remember_account"
             app:layout_constraintWidth_percent="0.5" />
 
         <!-- Sign Up Text -->
