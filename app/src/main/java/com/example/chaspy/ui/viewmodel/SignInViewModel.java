@@ -22,6 +22,10 @@ public class SignInViewModel extends AndroidViewModel {
     private MutableLiveData<String> errorMessage;
     private MutableLiveData<List<AccountItem>> savedAccountsLiveData;
     private SharedPreferencesManager preferencesManager;
+    private MutableLiveData<Boolean> needEmailVerification;
+    private MutableLiveData<Boolean> verificationEmailResent;
+    private String currentUsername; // Store current username
+    private String currentPassword; // Store current password
 
     public SignInViewModel(@NonNull Application application) {
         super(application);
@@ -29,6 +33,8 @@ public class SignInViewModel extends AndroidViewModel {
         isUserSignedIn = new MutableLiveData<>();
         errorMessage = new MutableLiveData<>();
         savedAccountsLiveData = new MutableLiveData<>();
+        needEmailVerification = new MutableLiveData<>();
+        verificationEmailResent = new MutableLiveData<>();
         preferencesManager = new SharedPreferencesManager(application);
         
         // Load saved accounts immediately
@@ -45,6 +51,14 @@ public class SignInViewModel extends AndroidViewModel {
     
     public LiveData<List<AccountItem>> getSavedAccountsLiveData() {
         return savedAccountsLiveData;
+    }
+    
+    public MutableLiveData<Boolean> getNeedEmailVerification() {
+        return needEmailVerification;
+    }
+    
+    public MutableLiveData<Boolean> getVerificationEmailResent() {
+        return verificationEmailResent;
     }
     
     public void loadSavedAccounts() {
@@ -110,18 +124,31 @@ public class SignInViewModel extends AndroidViewModel {
     // Sign in the user
     public void signInUser(String username, String password, boolean rememberAccount) {
         if (validateInput(username, password)) {
+            // Store current username and password for potential verification email resending
+            currentUsername = username;
+            currentPassword = password;
+            
             userRepository.signInUser(username + "@gmail.com", password).addOnCompleteListener(task -> {
                 if (task.isSuccessful()) {
                     // Sign-in successful
                     FirebaseUser firebaseUser = task.getResult().getUser();
                     if (firebaseUser != null) {
-                        if (rememberAccount) {
-                            preferencesManager.saveLoginCredentials(username, password, true);
-                        } else {
-                            // Just save login state without remember flag
-                            preferencesManager.saveLoginCredentials(username, password, false);
-                        }
-                        isUserSignedIn.setValue(true);
+                        // Check if email is verified
+                        firebaseUser.reload().addOnCompleteListener(reloadTask -> {
+                            if (userRepository.isEmailVerified(firebaseUser)) {
+                                if (rememberAccount) {
+                                    preferencesManager.saveLoginCredentials(username, password, true);
+                                } else {
+                                    // Just save login state without remember flag
+                                    preferencesManager.saveLoginCredentials(username, password, false);
+                                }
+                                isUserSignedIn.setValue(true);
+                            } else {
+                                // Email not verified
+                                needEmailVerification.setValue(true);
+                                userRepository.signOut();
+                            }
+                        });
                     }
                 } else {
                     // Sign-in failed
@@ -129,6 +156,36 @@ public class SignInViewModel extends AndroidViewModel {
                 }
             });
         }
+    }
+
+    // Method to resend verification email
+    public void resendVerificationEmail() {
+        if (TextUtils.isEmpty(currentUsername)) {
+            errorMessage.setValue("Username cannot be empty.");
+            return;
+        }
+        
+        if (TextUtils.isEmpty(currentPassword)) {
+            errorMessage.setValue("Password is required to resend verification email.");
+            return;
+        }
+        
+        // Create email from username
+        String email = currentUsername + "@gmail.com";
+        
+        userRepository.resendVerificationEmail(email, currentPassword)
+            .addOnCompleteListener(task -> {
+                if (task.isSuccessful()) {
+                    verificationEmailResent.setValue(true);
+                } else {
+                    String errorMsg = task.getException() != null ? task.getException().getMessage() : "Unknown error";
+                    if (errorMsg.contains("password") || errorMsg.contains("credential")) {
+                        errorMessage.setValue("Incorrect password. Please try signing in again.");
+                    } else {
+                        errorMessage.setValue("Failed to resend verification email: " + errorMsg);
+                    }
+                }
+            });
     }
 
     // Delete an account from saved accounts

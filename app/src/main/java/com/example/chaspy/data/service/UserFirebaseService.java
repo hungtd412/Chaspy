@@ -29,8 +29,46 @@ public class UserFirebaseService {
         return firebaseAuth.createUserWithEmailAndPassword(email, password);
     }
 
+    public Task<Void> sendEmailVerification(FirebaseUser user) {
+        return user.sendEmailVerification();
+    }
+    
+    public boolean isEmailVerified(FirebaseUser user) {
+        if (user != null) {
+            user.reload();
+            return user.isEmailVerified();
+        }
+        return false;
+    }
+
     public Task<AuthResult> signInUser(String email, String password) {
         return firebaseAuth.signInWithEmailAndPassword(email, password);
+    }
+
+    // Sign out the current user
+    public void signOut() {
+        firebaseAuth.signOut();
+    }
+    
+    // Resend verification email
+    public Task<Void> resendVerificationEmail(String email, String password) {
+        // Sign in with provided credentials first to access the user object
+        return firebaseAuth.signInWithEmailAndPassword(email, password)
+            .continueWithTask(signInTask -> {
+                if (signInTask.isSuccessful()) {
+                    FirebaseUser user = signInTask.getResult().getUser();
+                    return user.sendEmailVerification().continueWithTask(task -> {
+                        // Sign out after sending verification email
+                        firebaseAuth.signOut();
+                        return task;
+                    });
+                } else {
+                    // Handle the failed sign-in
+                    TaskCompletionSource<Void> taskCompletionSource = new TaskCompletionSource<>();
+                    taskCompletionSource.setException(signInTask.getException());
+                    return taskCompletionSource.getTask();
+                }
+            });
     }
 
     // Save additional user data in Firestore
@@ -101,3 +139,4 @@ public class UserFirebaseService {
         return taskCompletionSource.getTask();
     }
 }
+

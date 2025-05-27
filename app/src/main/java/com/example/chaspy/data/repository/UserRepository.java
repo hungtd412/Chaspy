@@ -7,26 +7,46 @@ import com.google.android.gms.tasks.Task;
 
 public class UserRepository {
 
-    private UserFirebaseService UserFirebaseService;
+    private UserFirebaseService userFirebaseService;
 
     public UserRepository() {
-        UserFirebaseService = new UserFirebaseService();
+        userFirebaseService = new UserFirebaseService();
     }
 
     // Register a new user
     public Task<AuthResult> registerUser(String email, String password) {
-        return UserFirebaseService.registerUser(email, password);
+        return userFirebaseService.registerUser(email, password);
+    }
+
+    // Send email verification
+    public Task<Void> sendEmailVerification(FirebaseUser user) {
+        return userFirebaseService.sendEmailVerification(user);
+    }
+    
+    // Check if email is verified
+    public boolean isEmailVerified(FirebaseUser user) {
+        return userFirebaseService.isEmailVerified(user);
     }
 
     // Sign in the user
     public Task<AuthResult> signInUser(String email, String password) {
-        return UserFirebaseService.signInUser(email, password);
+        return userFirebaseService.signInUser(email, password);
+    }
+    
+    // Sign out the current user
+    public void signOut() {
+        userFirebaseService.signOut();
+    }
+    
+    // Resend email verification
+    public Task<Void> resendVerificationEmail(String email, String password) {
+        return userFirebaseService.resendVerificationEmail(email, password);
     }
 
     // Save user data
     public Task<Void> saveUserData(Task<AuthResult> task, String firstName, String lastName) {
         FirebaseUser firebaseUser = task.getResult().getUser();
-
-        return UserFirebaseService.saveUserData(firebaseUser, firstName, lastName);
+        return userFirebaseService.saveUserData(firebaseUser, firstName, lastName);
     }
 }
+
