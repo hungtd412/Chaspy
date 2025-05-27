@@ -22,6 +22,7 @@ public class SignInViewModel extends AndroidViewModel {
     private MutableLiveData<String> errorMessage;
     private MutableLiveData<List<AccountItem>> savedAccountsLiveData;
     private SharedPreferencesManager preferencesManager;
+    private MutableLiveData<Boolean> needEmailVerification;
 
     public SignInViewModel(@NonNull Application application) {
         super(application);
@@ -29,6 +30,7 @@ public class SignInViewModel extends AndroidViewModel {
         isUserSignedIn = new MutableLiveData<>();
         errorMessage = new MutableLiveData<>();
         savedAccountsLiveData = new MutableLiveData<>();
+        needEmailVerification = new MutableLiveData<>();
         preferencesManager = new SharedPreferencesManager(application);
         
         // Load saved accounts immediately
@@ -45,6 +47,10 @@ public class SignInViewModel extends AndroidViewModel {
     
     public LiveData<List<AccountItem>> getSavedAccountsLiveData() {
         return savedAccountsLiveData;
+    }
+    
+    public MutableLiveData<Boolean> getNeedEmailVerification() {
+        return needEmailVerification;
     }
     
     public void loadSavedAccounts() {
@@ -115,13 +121,24 @@ public class SignInViewModel extends AndroidViewModel {
                     // Sign-in successful
                     FirebaseUser firebaseUser = task.getResult().getUser();
                     if (firebaseUser != null) {
-                        if (rememberAccount) {
-                            preferencesManager.saveLoginCredentials(username, password, true);
-                        } else {
-                            // Just save login state without remember flag
-                            preferencesManager.saveLoginCredentials(username, password, false);
-                        }
-                        isUserSignedIn.setValue(true);
+                        // Check if email is verified
+                        firebaseUser.reload().addOnCompleteListener(reloadTask -> {
+                            if (userRepository.isEmailVerified(firebaseUser)) {
+                                if (rememberAccount) {
+                                    preferencesManager.saveLoginCredentials(username, password, true);
+                                } else {
+                                    // Just save login state without remember flag
+                                    preferencesManager.saveLoginCredentials(username, password, false);
+                                }
+                                isUserSignedIn.setValue(true);
+                            } else {
+                                // Email not verified
+                                needEmailVerification.setValue(true);
+                                errorMessage.setValue("Please verify your email before signing in.");
+                                // Sign out the user as they haven't verified their email
+                                userRepository.signOut();
+                            }
+                        });
                     }
                 } else {
                     // Sign-in failed

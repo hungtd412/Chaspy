@@ -245,12 +245,33 @@ public class SignInActivity extends AppCompatActivity {
             }
         });
 
+        // Observe need email verification
+        signInViewModel.getNeedEmailVerification().observe(this, needVerification -> {
+            if (needVerification) {
+                showEmailVerificationDialog();
+            }
+        });
+
         // Observe error messages
         signInViewModel.getErrorMessage().observe(this, errorMsg -> {
             if (errorMsg != null && !errorMsg.isEmpty()) {
                 Toast.makeText(this, errorMsg, Toast.LENGTH_LONG).show();
             }
         });
+    }
+    
+    private void showEmailVerificationDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Email Verification Required");
+        builder.setMessage("Please verify your email address before signing in. " +
+                "Check your inbox for the verification email we sent when you registered.");
+        builder.setPositiveButton("OK", (dialog, which) -> dialog.dismiss());
+        builder.setNeutralButton("Resend Verification Email", (dialog, which) -> {
+            // TODO: Add functionality to resend verification email
+            Toast.makeText(this, "Verification email resent. Please check your inbox.", Toast.LENGTH_LONG).show();
+            dialog.dismiss();
+        });
+        builder.show();
     }
     
     @Override

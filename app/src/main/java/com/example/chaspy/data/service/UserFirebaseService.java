@@ -29,8 +29,37 @@ public class UserFirebaseService {
         return firebaseAuth.createUserWithEmailAndPassword(email, password);
     }
 
+    public Task<Void> sendEmailVerification(FirebaseUser user) {
+        return user.sendEmailVerification();
+    }
+    
+    public boolean isEmailVerified(FirebaseUser user) {
+        if (user != null) {
+            user.reload();
+            return user.isEmailVerified();
+        }
+        return false;
+    }
+
     public Task<AuthResult> signInUser(String email, String password) {
         return firebaseAuth.signInWithEmailAndPassword(email, password);
+    }
+
+    // Sign out the current user
+    public void signOut() {
+        firebaseAuth.signOut();
+    }
+    
+    // Resend verification email
+    public Task<Void> resendVerificationEmail() {
+        FirebaseUser user = firebaseAuth.getCurrentUser();
+        if (user != null) {
+            return user.sendEmailVerification();
+        } else {
+            TaskCompletionSource<Void> taskCompletionSource = new TaskCompletionSource<>();
+            taskCompletionSource.setException(new Exception("No user is currently signed in"));
+            return taskCompletionSource.getTask();
+        }
     }
 
     // Save additional user data in Firestore
