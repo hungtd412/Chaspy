@@ -21,7 +21,7 @@
         </activity>
 
         <activity
-            android:name=".ui.view.SignInActivity"
+            android:name=".ui.view.ConversationActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -30,7 +30,7 @@
         </activity>
 
         <activity
-            android:name=".ui.view.ConversationActivity"
+            android:name=".ui.view.FriendsActivity"
             android:exported="true">
 
         </activity>
@@ -39,7 +39,7 @@
             android:exported="true" />
 
         <activity
-            android:name=".ui.view.FriendsActivity"
+            android:name=".ui.view.SignInActivity"
             android:exported="true">
 
         </activity>
