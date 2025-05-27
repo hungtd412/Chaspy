@@ -31,6 +31,7 @@ public class UserAdapter extends RecyclerView.Adapter<UserAdapter.UserViewHolder
     // Interface for handling friend request button clicks
     public interface OnAddFriendClickListener {
         void onAddFriendClick(User user, int position);
+        void onCancelFriendRequestClick(User user, int position);
     }
     
     public UserAdapter(Context mainActivity, ArrayList<User> usersArrayList) {
@@ -74,10 +75,17 @@ public class UserAdapter extends RecyclerView.Adapter<UserAdapter.UserViewHolder
         
         // Set button state based on friend request status
         if (sentFriendRequests != null && sentFriendRequests.containsKey(user.getUid())) {
-            // Request already sent
+            // Request already sent - show cancel option
             Button btnAddFriend = holder.getAddFriendButton();
-            btnAddFriend.setText("Pending");
-            btnAddFriend.setEnabled(false);
+            btnAddFriend.setText("Cancel");
+            btnAddFriend.setEnabled(true);
+            
+            // Set cancel request click listener
+            btnAddFriend.setOnClickListener(view -> {
+                if (addFriendListener != null) {
+                    addFriendListener.onCancelFriendRequestClick(user, position);
+                }
+            });
         } else if (receivedFriendRequests != null && receivedFriendRequests.containsKey(user.getUid())) {
             // Request received from this user
             Button btnAddFriend = holder.getAddFriendButton();
@@ -88,14 +96,14 @@ public class UserAdapter extends RecyclerView.Adapter<UserAdapter.UserViewHolder
             Button btnAddFriend = holder.getAddFriendButton();
             btnAddFriend.setText("Add");
             btnAddFriend.setEnabled(true);
+            
+            // Setup add friend button click
+            btnAddFriend.setOnClickListener(view -> {
+                if (addFriendListener != null) {
+                    addFriendListener.onAddFriendClick(user, position);
+                }
+            });
         }
-        
-        // Setup add friend button click
-        holder.getAddFriendButton().setOnClickListener(view -> {
-            if (addFriendListener != null) {
-                addFriendListener.onAddFriendClick(user, position);
-            }
-        });
     }
 
     @Override

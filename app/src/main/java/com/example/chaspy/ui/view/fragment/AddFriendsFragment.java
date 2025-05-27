@@ -1,5 +1,6 @@
 package com.example.chaspy.ui.view.fragment;
 
+import android.app.AlertDialog;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -47,6 +48,7 @@ public class AddFriendsFragment extends Fragment implements UserAdapter.OnAddFri
     private Map<String, Boolean> sentFriendRequests = new HashMap<>();
     private Map<String, Boolean> receivedFriendRequests = new HashMap<>();
     private Map<String, Boolean> blockedUsers = new HashMap<>();
+    private Map<String, String> friendRequestIdsByReceiver = new HashMap<>();
     private String currentUserId;
 
     @Nullable
@@ -139,27 +141,31 @@ public class AddFriendsFragment extends Fragment implements UserAdapter.OnAddFri
 
         // Clear existing data
         sentFriendRequests.clear();
+        friendRequestIdsByReceiver.clear();
 
         // Query for requests where current user is the sender
         friendRequestsReference.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                 sentFriendRequests.clear();
+                friendRequestIdsByReceiver.clear();
 
                 if (dataSnapshot.exists()) {
                     for (DataSnapshot requestSnapshot : dataSnapshot.getChildren()) {
+                        String requestId = requestSnapshot.getKey();
                         FriendRequest request = requestSnapshot.getValue(FriendRequest.class);
+
                         if (
                                 request != null && currentUserId.equals(request.getSenderId())
-                                && request.getReceiverId() != null
-                                && "pending".equals(request.getStatus())
+                                        && request.getReceiverId() != null
+                                        && "pending".equals(request.getStatus())
                         ) {
                             sentFriendRequests.put(request.getReceiverId(), true);
+                            // Store request ID for later cancellation
+                            friendRequestIdsByReceiver.put(request.getReceiverId(), requestId);
                         }
                     }
                 }
-
-                System.out.println("Sent friend requests: " + sentFriendRequests);
 
                 // Update adapter button states for any visible items
                 if (userAdapter != null) {
@@ -198,8 +204,8 @@ public class AddFriendsFragment extends Fragment implements UserAdapter.OnAddFri
 
                         if (
                                 request != null && currentUserId.equals(request.getReceiverId())
-                                && request.getSenderId() != null
-                                && "pending".equals(request.getStatus())) {
+                                        && request.getSenderId() != null
+                                        && "pending".equals(request.getStatus())) {
                             receivedFriendRequests.put(request.getSenderId(), true);
                         }
                     }
@@ -438,6 +444,7 @@ public class AddFriendsFragment extends Fragment implements UserAdapter.OnAddFri
                 .addOnSuccessListener(aVoid -> {
                     // Update local map of sent requests
                     sentFriendRequests.put(receiverId, true);
+                    friendRequestIdsByReceiver.put(receiverId, requestId);
 
                     // Update button states in adapter
                     if (userAdapter != null) {
@@ -457,6 +464,73 @@ public class AddFriendsFragment extends Fragment implements UserAdapter.OnAddFri
                     }
                     e.printStackTrace();
                 });
+    }
+
+    /**
+     * Cancel a friend request that was sent to the specified user
+     *
+     * @param receiverId The ID of the request recipient
+     */
+    private void cancelFriendRequest(String receiverId) {
+        if (currentUserId == null || receiverId == null) {
+            if (getContext() != null) {
+                Toast.makeText(getContext(), "Error: Invalid user data", Toast.LENGTH_SHORT).show();
+            }
+            return;
+        }
+
+        // Get the request ID from our map
+        String requestId = friendRequestIdsByReceiver.get(receiverId);
+        if (requestId == null) {
+            if (getContext() != null) {
+                Toast.makeText(getContext(), "Error: Unable to find request ID", Toast.LENGTH_SHORT).show();
+            }
+            return;
+        }
+
+        // Delete the friend request from Firebase
+        friendRequestsReference.child(requestId).removeValue()
+                .addOnSuccessListener(aVoid -> {
+                    // Update local map of sent requests
+                    sentFriendRequests.remove(receiverId);
+                    friendRequestIdsByReceiver.remove(receiverId);
+
+                    // Update button states in adapter
+                    if (userAdapter != null) {
+                        userAdapter.updateButtonStates(sentFriendRequests, receivedFriendRequests);
+                    }
+
+                    // Show success message
+                    if (getContext() != null) {
+                        Toast.makeText(getContext(), "Friend request canceled", Toast.LENGTH_SHORT).show();
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    // Show error message
+                    if (getContext() != null) {
+                        Toast.makeText(getContext(), "Failed to cancel request: " + e.getMessage(),
+                                Toast.LENGTH_SHORT).show();
+                    }
+                    e.printStackTrace();
+                });
+    }
+
+    /**
+     * Show a confirmation dialog before canceling a friend request
+     *
+     * @param user The user to whom the request was sent
+     */
+    private void showCancelRequestConfirmation(User user) {
+        if (getContext() == null || user == null) return;
+
+        new AlertDialog.Builder(getContext())
+                .setTitle("Cancel Friend Request")
+                .setMessage("Are you sure you want to cancel your friend request to " + user.getFullName() + "?")
+                .setPositiveButton("Yes", (dialog, which) -> {
+                    cancelFriendRequest(user.getUid());
+                })
+                .setNegativeButton("No", (dialog, which) -> dialog.dismiss())
+                .show();
     }
 
     @Override
@@ -508,5 +582,11 @@ public class AddFriendsFragment extends Fragment implements UserAdapter.OnAddFri
             }
             e.printStackTrace();
         }
+    }
+
+    @Override
+    public void onCancelFriendRequestClick(User user, int position) {
+        // Show confirmation dialog before canceling request
+        showCancelRequestConfirmation(user);
     }
 }
