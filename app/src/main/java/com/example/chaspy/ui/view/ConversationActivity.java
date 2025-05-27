@@ -20,8 +20,10 @@ import com.example.chaspy.ui.adapter.ConversationAdapter;
 import com.example.chaspy.ui.viewmodel.ConversationViewModel;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import androidx.cardview.widget.CardView;
 
 import java.util.List;
+import java.util.Set;
 
 public class ConversationActivity extends AppCompatActivity {
 
@@ -78,8 +80,9 @@ public class ConversationActivity extends AppCompatActivity {
         });
         recyclerView.setAdapter(adapter);
 
-        // Set up Settings button click listener
-        ImageButton btnSettings = findViewById(R.id.btn_settings);
+//         Set up Settings button click listener
+        CardView btnSettings = findViewById(R.id.btn_settings);
+        System.out.println("Settings button initialized");
         btnSettings.setOnClickListener(view -> {
             // Navigate to FriendsActivity
             Intent intent = new Intent(ConversationActivity.this, SettingActivity.class);

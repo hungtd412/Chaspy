@@ -23,6 +23,9 @@ public class SignInViewModel extends AndroidViewModel {
     private MutableLiveData<List<AccountItem>> savedAccountsLiveData;
     private SharedPreferencesManager preferencesManager;
     private MutableLiveData<Boolean> needEmailVerification;
+    private MutableLiveData<Boolean> verificationEmailResent;
+    private String currentUsername; // Store current username
+    private String currentPassword; // Store current password
 
     public SignInViewModel(@NonNull Application application) {
         super(application);
@@ -31,6 +34,7 @@ public class SignInViewModel extends AndroidViewModel {
         errorMessage = new MutableLiveData<>();
         savedAccountsLiveData = new MutableLiveData<>();
         needEmailVerification = new MutableLiveData<>();
+        verificationEmailResent = new MutableLiveData<>();
         preferencesManager = new SharedPreferencesManager(application);
         
         // Load saved accounts immediately
@@ -51,6 +55,10 @@ public class SignInViewModel extends AndroidViewModel {
     
     public MutableLiveData<Boolean> getNeedEmailVerification() {
         return needEmailVerification;
+    }
+    
+    public MutableLiveData<Boolean> getVerificationEmailResent() {
+        return verificationEmailResent;
     }
     
     public void loadSavedAccounts() {
@@ -116,6 +124,10 @@ public class SignInViewModel extends AndroidViewModel {
     // Sign in the user
     public void signInUser(String username, String password, boolean rememberAccount) {
         if (validateInput(username, password)) {
+            // Store current username and password for potential verification email resending
+            currentUsername = username;
+            currentPassword = password;
+            
             userRepository.signInUser(username + "@gmail.com", password).addOnCompleteListener(task -> {
                 if (task.isSuccessful()) {
                     // Sign-in successful
@@ -134,8 +146,6 @@ public class SignInViewModel extends AndroidViewModel {
                             } else {
                                 // Email not verified
                                 needEmailVerification.setValue(true);
-                                errorMessage.setValue("Please verify your email before signing in.");
-                                // Sign out the user as they haven't verified their email
                                 userRepository.signOut();
                             }
                         });
@@ -146,6 +156,36 @@ public class SignInViewModel extends AndroidViewModel {
                 }
             });
         }
+    }
+
+    // Method to resend verification email
+    public void resendVerificationEmail() {
+        if (TextUtils.isEmpty(currentUsername)) {
+            errorMessage.setValue("Username cannot be empty.");
+            return;
+        }
+        
+        if (TextUtils.isEmpty(currentPassword)) {
+            errorMessage.setValue("Password is required to resend verification email.");
+            return;
+        }
+        
+        // Create email from username
+        String email = currentUsername + "@gmail.com";
+        
+        userRepository.resendVerificationEmail(email, currentPassword)
+            .addOnCompleteListener(task -> {
+                if (task.isSuccessful()) {
+                    verificationEmailResent.setValue(true);
+                } else {
+                    String errorMsg = task.getException() != null ? task.getException().getMessage() : "Unknown error";
+                    if (errorMsg.contains("password") || errorMsg.contains("credential")) {
+                        errorMessage.setValue("Incorrect password. Please try signing in again.");
+                    } else {
+                        errorMessage.setValue("Failed to resend verification email: " + errorMsg);
+                    }
+                }
+            });
     }
 
     // Delete an account from saved accounts

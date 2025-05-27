@@ -39,8 +39,8 @@ public class UserRepository {
     }
     
     // Resend email verification
-    public Task<Void> resendVerificationEmail() {
-        return userFirebaseService.resendVerificationEmail();
+    public Task<Void> resendVerificationEmail(String email, String password) {
+        return userFirebaseService.resendVerificationEmail(email, password);
     }
 
     // Save user data
@@ -49,3 +49,4 @@ public class UserRepository {
         return userFirebaseService.saveUserData(firebaseUser, firstName, lastName);
     }
 }
+

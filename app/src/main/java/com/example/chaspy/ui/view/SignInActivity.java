@@ -12,6 +12,7 @@ import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.PopupWindow;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -78,7 +79,7 @@ public class SignInActivity extends AppCompatActivity {
             Intent intent = new Intent(SignInActivity.this, SignUpActivity.class);
             startActivity(intent);
         });
-        
+
         // Load saved credentials if available
         if (signInViewModel.isRememberAccount()) {
             etUsername.setText(signInViewModel.getSavedUsername());
@@ -124,15 +125,15 @@ public class SignInActivity extends AppCompatActivity {
     private void showAccountSuggestions(EditText anchor, List<AccountItem> accounts) {
         // Dismiss any existing popup
         dismissAccountSuggestionsPopup();
-        
+
         // Create container for suggestion items
         LinearLayout suggestionContainer = new LinearLayout(this);
         suggestionContainer.setOrientation(LinearLayout.VERTICAL);
         suggestionContainer.setBackgroundResource(android.R.color.white);
-        
+
         // Add border to the suggestion container
         suggestionContainer.setElevation(8f);
-        
+
         // Create popup window
         accountSuggestionsPopup = new PopupWindow(
                 suggestionContainer,
@@ -140,7 +141,7 @@ public class SignInActivity extends AppCompatActivity {
                 ViewGroup.LayoutParams.WRAP_CONTENT,
                 true
         );
-        
+
         // Add suggestion items
         LayoutInflater inflater = LayoutInflater.from(this);
         for (AccountItem account : accounts) {
@@ -148,7 +149,7 @@ public class SignInActivity extends AppCompatActivity {
             TextView tvUsername = suggestionItem.findViewById(R.id.tv_account_username);
             ImageButton btnDeleteAccount = suggestionItem.findViewById(R.id.btn_delete_account);
             tvUsername.setText(account.getUsername());
-            
+
             // Handle normal click - fill the fields
             suggestionItem.setOnClickListener(v -> {
                 etUsername.setText(account.getUsername());
@@ -156,29 +157,29 @@ public class SignInActivity extends AppCompatActivity {
                 cbRememberAccount.setChecked(true);
                 dismissAccountSuggestionsPopup();
             });
-            
+
             // Handle long click - show delete button
             suggestionItem.setOnLongClickListener(v -> {
                 // Show the delete button
                 btnDeleteAccount.setVisibility(View.VISIBLE);
                 return true;
             });
-            
+
             // Handle delete button click
             btnDeleteAccount.setOnClickListener(v -> {
                 // Show confirmation dialog
                 showDeleteAccountConfirmation(account.getUsername());
             });
-            
+
             suggestionContainer.addView(suggestionItem);
         }
-        
+
         // Show popup below the anchor view
         accountSuggestionsPopup.setOutsideTouchable(true);
         accountSuggestionsPopup.setElevation(10f);
         accountSuggestionsPopup.showAsDropDown(anchor, 0, 0, Gravity.TOP);
     }
-    
+
     private void showDeleteAccountConfirmation(String username) {
         new AlertDialog.Builder(this)
                 .setTitle("Delete Account")
@@ -186,13 +187,13 @@ public class SignInActivity extends AppCompatActivity {
                 .setPositiveButton("Delete", (dialog, which) -> {
                     // Delete the account from saved accounts
                     signInViewModel.deleteSavedAccount(username);
-                    
+
                     // Show confirmation toast
                     Toast.makeText(this, "Account removed from saved accounts", Toast.LENGTH_SHORT).show();
-                    
+
                     // Dismiss the popup
                     dismissAccountSuggestionsPopup();
-                    
+
                     // Clear the fields if they match the deleted account
                     if (etUsername.getText().toString().equals(username)) {
                         etUsername.setText("");
@@ -203,7 +204,7 @@ public class SignInActivity extends AppCompatActivity {
                 .setNegativeButton("Cancel", null)
                 .show();
     }
-    
+
     private void dismissAccountSuggestionsPopup() {
         if (accountSuggestionsPopup != null && accountSuggestionsPopup.isShowing()) {
             accountSuggestionsPopup.dismiss();
@@ -213,7 +214,7 @@ public class SignInActivity extends AppCompatActivity {
     private void setupObservers() {
         // Load saved accounts
         signInViewModel.loadSavedAccounts();
-        
+
         // Observe changes to saved accounts
         signInViewModel.getSavedAccountsLiveData().observe(this, accounts -> {
             // If username field is not empty, check if its account was just deleted
@@ -226,7 +227,7 @@ public class SignInActivity extends AppCompatActivity {
                         break;
                     }
                 }
-                
+
                 // Clear fields if account doesn't exist anymore
                 if (!accountExists) {
                     etUsername.setText("");
@@ -235,7 +236,7 @@ public class SignInActivity extends AppCompatActivity {
                 }
             }
         });
-        
+
         // Observe login success
         signInViewModel.getIsUserSignedIn().observe(this, isSignedIn -> {
             if (isSignedIn) {
@@ -259,24 +260,40 @@ public class SignInActivity extends AppCompatActivity {
             }
         });
     }
-    
+
     private void showEmailVerificationDialog() {
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("Email Verification Required");
-        builder.setMessage("Please verify your email address before signing in. " +
-                "Check your inbox for the verification email we sent when you registered.");
-        builder.setPositiveButton("OK", (dialog, which) -> dialog.dismiss());
-        builder.setNeutralButton("Resend Verification Email", (dialog, which) -> {
-            // TODO: Add functionality to resend verification email
-            Toast.makeText(this, "Verification email resent. Please check your inbox.", Toast.LENGTH_LONG).show();
-            dialog.dismiss();
+        View dialogView = getLayoutInflater().inflate(R.layout.dialog_email_verification, null);
+        TextView tvMessage = dialogView.findViewById(R.id.tv_verification_message);
+        Button btnResend = dialogView.findViewById(R.id.btn_resend_verification);
+        Button btnOk = dialogView.findViewById(R.id.btn_ok);
+        ProgressBar progressBar = dialogView.findViewById(R.id.progress_resend);
+
+        tvMessage.setText("Please verify your email before signing in. A verification email has been sent to your registered email address.");
+        AlertDialog dialog = new AlertDialog.Builder(this)
+                .setView(dialogView)
+                .setCancelable(false)
+                .create();
+        dialog.show();
+        btnResend.setOnClickListener(v -> {
+            progressBar.setVisibility(View.VISIBLE);
+            signInViewModel.resendVerificationEmail();
         });
-        builder.show();
-    }
-    
-    @Override
-    public void onPause() {
-        super.onPause();
-        dismissAccountSuggestionsPopup();
+        btnOk.setOnClickListener(v -> dialog.dismiss());
+        signInViewModel.getVerificationEmailResent().observe(this, isResent -> {
+            if (isResent) {
+                progressBar.setVisibility(View.GONE);
+            }
+        });
+        signInViewModel.getErrorMessage().observe(this, errorMsg -> {
+            if (errorMsg != null && !errorMsg.isEmpty()) {
+                progressBar.setVisibility(View.GONE);
+                Toast.makeText(SignInActivity.this, errorMsg, Toast.LENGTH_LONG).show();
+            }
+        });
+        signInViewModel.getNeedEmailVerification().observe(this, needVerification -> {
+            if (!needVerification) {
+                dialog.dismiss();
+            }
+        });
     }
 }

@@ -15,6 +15,7 @@ import androidx.cardview.widget.CardView;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.RequestOptions;
 import com.example.chaspy.R;
+import com.example.chaspy.data.manager.SharedPreferencesManager;
 import com.google.android.material.button.MaterialButton;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -34,6 +35,8 @@ public class SettingActivity extends AppCompatActivity {
     private FirebaseAuth firebaseAuth;
     private DatabaseReference databaseReference;
     private String currentUserId;
+
+    private SharedPreferencesManager preferencesManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -61,6 +64,8 @@ public class SettingActivity extends AppCompatActivity {
         friendsManagerOption = findViewById(R.id.friendsManagerOption);
         logoutOption = findViewById(R.id.logoutOption);
         CardView editProfileBtn = findViewById(R.id.editProfileBtn);
+
+        preferencesManager = new SharedPreferencesManager(this);
 
         // Load user data
         loadUserData();
@@ -175,6 +180,7 @@ public class SettingActivity extends AppCompatActivity {
         logoutOption.setOnClickListener(v -> {
             // Handle logout
             FirebaseAuth.getInstance().signOut();
+            preferencesManager.setLoggedOut();
             Toast.makeText(SettingActivity.this, "Logged out successfully", Toast.LENGTH_SHORT).show();
             // Navigate to login screen after logout
             Intent intent = new Intent(SettingActivity.this, SignInActivity.class);

@@ -51,15 +51,24 @@ public class UserFirebaseService {
     }
     
     // Resend verification email
-    public Task<Void> resendVerificationEmail() {
-        FirebaseUser user = firebaseAuth.getCurrentUser();
-        if (user != null) {
-            return user.sendEmailVerification();
-        } else {
-            TaskCompletionSource<Void> taskCompletionSource = new TaskCompletionSource<>();
-            taskCompletionSource.setException(new Exception("No user is currently signed in"));
-            return taskCompletionSource.getTask();
-        }
+    public Task<Void> resendVerificationEmail(String email, String password) {
+        // Sign in with provided credentials first to access the user object
+        return firebaseAuth.signInWithEmailAndPassword(email, password)
+            .continueWithTask(signInTask -> {
+                if (signInTask.isSuccessful()) {
+                    FirebaseUser user = signInTask.getResult().getUser();
+                    return user.sendEmailVerification().continueWithTask(task -> {
+                        // Sign out after sending verification email
+                        firebaseAuth.signOut();
+                        return task;
+                    });
+                } else {
+                    // Handle the failed sign-in
+                    TaskCompletionSource<Void> taskCompletionSource = new TaskCompletionSource<>();
+                    taskCompletionSource.setException(signInTask.getException());
+                    return taskCompletionSource.getTask();
+                }
+            });
     }
 
     // Save additional user data in Firestore
@@ -130,3 +139,4 @@ public class UserFirebaseService {
         return taskCompletionSource.getTask();
     }
 }
+
