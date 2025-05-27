@@ -135,7 +135,7 @@
                                 android:layout_height="wrap_content"
                                 android:layout_gravity="center"
                                 android:src="@android:drawable/ic_dialog_email"
-                                app:tint="#757575" />
+                                app:tint="#2196F3" />
                         </androidx.cardview.widget.CardView>
 
                         <!-- Settings Button -->
@@ -152,7 +152,7 @@
                                 android:layout_height="24dp"
                                 android:layout_gravity="center"
                                 android:src="@android:drawable/ic_menu_manage"
-                                app:tint="#2196F3" />
+                                app:tint="#757575" />
                         </androidx.cardview.widget.CardView>
                     </LinearLayout>
                 </androidx.cardview.widget.CardView>

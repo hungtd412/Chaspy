@@ -7,7 +7,12 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.view.View;
 import android.widget.Toast;
-
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
+import android.view.Gravity;
+import android.view.WindowManager;
+import android.widget.LinearLayout;
+import android.widget.PopupWindow;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.cardview.widget.CardView;
@@ -162,13 +167,13 @@ public class SettingActivity extends AppCompatActivity {
 
     private void setupClickListeners() {
         editUsernameOption.setOnClickListener(v -> {
-            // Handle edit username click
-            Toast.makeText(SettingActivity.this, "Edit username feature coming soon", Toast.LENGTH_SHORT).show();
+            // Show username edit popup
+            showUsernameEditPopup();
         });
 
         editPasswordOption.setOnClickListener(v -> {
-            // Handle edit password click
-            Toast.makeText(SettingActivity.this, "Edit password feature coming soon", Toast.LENGTH_SHORT).show();
+            // Show password edit popup
+            showPasswordEditPopup();
         });
 
         friendsManagerOption.setOnClickListener(v -> {
@@ -195,6 +200,68 @@ public class SettingActivity extends AppCompatActivity {
             Intent intent = new Intent(SettingActivity.this, ConversationActivity.class);
             startActivity(intent);
             finish(); // Finish current activity to avoid stacking
+        });
+    }
+
+    private void showUsernameEditPopup() {
+        // Inflate the popup layout
+        View popupView = getLayoutInflater().inflate(R.layout.popup_username, null);
+
+        // Create the popup window with a fixed width matching the XML layout
+        int width = (int) getResources().getDimension(R.dimen.popup_width);
+
+        int height = LinearLayout.LayoutParams.WRAP_CONTENT;
+        boolean focusable = true; // Allows taps outside the popup to dismiss it
+        final PopupWindow popupWindow = new PopupWindow(popupView, width, height, focusable);
+
+        // Set a background drawable with elevation for shadow effect
+        popupWindow.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+        popupWindow.setElevation(10);
+
+        // Show the popup window centered in the screen
+        popupWindow.showAtLocation(findViewById(android.R.id.content), Gravity.CENTER, 0, 0);
+
+        // Dim the background
+        View rootView = getWindow().getDecorView().getRootView();
+        WindowManager.LayoutParams params = (WindowManager.LayoutParams) getWindow().getAttributes();
+        params.alpha = 0.8f;
+        getWindow().setAttributes(params);
+
+        // Restore background alpha when popup is dismissed
+        popupWindow.setOnDismissListener(() -> {
+            params.alpha = 1f;
+            getWindow().setAttributes(params);
+        });
+    }
+
+    private void showPasswordEditPopup() {
+        // Inflate the popup layout
+        View popupView = getLayoutInflater().inflate(R.layout.popup_password, null);
+
+        // Create the popup window with a fixed width matching the XML layout
+        int width = (int) getResources().getDimension(R.dimen.popup_width);
+
+        int height = LinearLayout.LayoutParams.WRAP_CONTENT;
+        boolean focusable = true;
+        final PopupWindow popupWindow = new PopupWindow(popupView, width, height, focusable);
+
+        // Set a background drawable with elevation
+        popupWindow.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+        popupWindow.setElevation(10);
+
+        // Show the popup window centered in the screen
+        popupWindow.showAtLocation(findViewById(android.R.id.content), Gravity.CENTER, 0, 0);
+
+        // Dim the background
+        View rootView = getWindow().getDecorView().getRootView();
+        WindowManager.LayoutParams params = (WindowManager.LayoutParams) getWindow().getAttributes();
+        params.alpha = 0.8f;
+        getWindow().setAttributes(params);
+
+        // Restore background alpha when popup is dismissed
+        popupWindow.setOnDismissListener(() -> {
+            params.alpha = 1f;
+            getWindow().setAttributes(params);
         });
     }
 }

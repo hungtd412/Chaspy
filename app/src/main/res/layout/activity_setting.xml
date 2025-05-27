@@ -10,7 +10,7 @@
         android:id="@+id/profileCard"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        app:cardBackgroundColor="#A5D6F7"
+        app:cardBackgroundColor="#7CB9FF"
         app:cardCornerRadius="20dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -25,6 +25,7 @@
                 android:id="@+id/profileImageWrapper"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginTop="30dp"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent">
@@ -60,7 +61,7 @@
                         android:layout_height="16dp"
                         android:layout_gravity="center"
                         android:src="@android:drawable/ic_menu_edit"
-                        app:tint="#2196F3" />
+                        app:tint="#7CB9FF" />
                 </androidx.cardview.widget.CardView>
             </FrameLayout>
 
@@ -304,7 +305,7 @@
         android:id="@+id/bottomNavContainer"
         android:layout_width="180dp"
         android:layout_height="55dp"
-        android:layout_marginBottom="24dp"
+        android:layout_marginBottom="20dp"
         app:cardCornerRadius="27.5dp"
         app:cardElevation="0dp"
         app:cardBackgroundColor="#E0F7FA"
