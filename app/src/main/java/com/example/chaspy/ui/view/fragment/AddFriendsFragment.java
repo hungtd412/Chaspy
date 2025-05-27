@@ -28,6 +28,7 @@ import com.google.firebase.database.ValueEventListener;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 public class AddFriendsFragment extends Fragment implements UserAdapter.OnAddFriendClickListener {
 
@@ -148,7 +149,11 @@ public class AddFriendsFragment extends Fragment implements UserAdapter.OnAddFri
                 if (dataSnapshot.exists()) {
                     for (DataSnapshot requestSnapshot : dataSnapshot.getChildren()) {
                         FriendRequest request = requestSnapshot.getValue(FriendRequest.class);
-                        if (request != null && currentUserId.equals(request.getSenderId()) && request.getReceiverId() != null && request.getStatus() == "pending") {
+                        if (
+                                request != null && currentUserId.equals(request.getSenderId())
+                                && request.getReceiverId() != null
+                                && "pending".equals(request.getStatus())
+                        ) {
                             sentFriendRequests.put(request.getReceiverId(), true);
                         }
                     }
@@ -191,13 +196,14 @@ public class AddFriendsFragment extends Fragment implements UserAdapter.OnAddFri
                     for (DataSnapshot requestSnapshot : dataSnapshot.getChildren()) {
                         FriendRequest request = requestSnapshot.getValue(FriendRequest.class);
 
-                        if (request != null && currentUserId.equals(request.getReceiverId()) && request.getSenderId() != null && request.getStatus() != "accepted") {
+                        if (
+                                request != null && currentUserId.equals(request.getReceiverId())
+                                && request.getSenderId() != null
+                                && "pending".equals(request.getStatus())) {
                             receivedFriendRequests.put(request.getSenderId(), true);
                         }
                     }
                 }
-                System.out.println("Received friend requests: " + receivedFriendRequests);
-
                 System.out.println("Received friend requests: " + receivedFriendRequests);
 
                 // Update adapter button states for any visible items
