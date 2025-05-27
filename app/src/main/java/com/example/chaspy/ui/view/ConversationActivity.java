@@ -80,11 +80,11 @@ public class ConversationActivity extends AppCompatActivity {
         });
         recyclerView.setAdapter(adapter);
 
-//         Set up Settings button click listener
+        // Set up Settings button click listener
         CardView btnSettings = findViewById(R.id.btn_settings);
         System.out.println("Settings button initialized");
         btnSettings.setOnClickListener(view -> {
-            // Navigate to FriendsActivity
+            // Navigate to SettingActivity
             Intent intent = new Intent(ConversationActivity.this, SettingActivity.class);
             startActivity(intent);
         });

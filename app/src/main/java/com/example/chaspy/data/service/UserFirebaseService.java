@@ -12,6 +12,9 @@ import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.android.gms.tasks.TaskCompletionSource;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public class UserFirebaseService {
 
     private static FirebaseAuth firebaseAuth;
@@ -86,6 +89,23 @@ public class UserFirebaseService {
                 throw task.getException();
             }
         });
+    }
+
+    /**
+     * Update user profile data (first name and last name)
+     * @param userId The user ID to update
+     * @param firstName New first name
+     * @param lastName New last name
+     * @return Task result of the update operation
+     */
+    public Task<Void> updateUserProfile(String userId, String firstName, String lastName) {
+        // Create a map of the fields to update
+        Map<String, Object> updates = new HashMap<>();
+        updates.put("firstName", firstName);
+        updates.put("lastName", lastName);
+        
+        // Update all fields simultaneously
+        return usersRef.child(userId).updateChildren(updates);
     }
 
     // Fetch and cache the default avatar URL
