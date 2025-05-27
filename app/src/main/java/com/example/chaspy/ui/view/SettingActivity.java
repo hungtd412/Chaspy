@@ -29,7 +29,7 @@ public class SettingActivity extends AppCompatActivity {
     private static final String TAG = "SettingActivity";
     private ImageView profileImage;
     private TextView txtUsername;
-    private CardView editUsernameOption, editPasswordOption, friendsManagerOption, btn_logout;
+    private CardView editUsernameOption, editPasswordOption, friendsManagerOption, logoutOption;
 
     private FirebaseAuth firebaseAuth;
     private DatabaseReference databaseReference;
@@ -59,7 +59,7 @@ public class SettingActivity extends AppCompatActivity {
         editUsernameOption = findViewById(R.id.editUsernameOption);
         editPasswordOption = findViewById(R.id.editPasswordOption);
         friendsManagerOption = findViewById(R.id.friendsManagerOption);
-        btn_logout = findViewById(R.id.btn_logout);
+        logoutOption = findViewById(R.id.logoutOption);
         CardView editProfileBtn = findViewById(R.id.editProfileBtn);
 
         // Load user data
@@ -171,13 +171,24 @@ public class SettingActivity extends AppCompatActivity {
             Intent intent = new Intent(SettingActivity.this, FriendsActivity.class);
             startActivity(intent);
         });
-        
-//        btn_logout.setOnClickListener(v -> {
-//            // Handle logout
-//            FirebaseAuth.getInstance().signOut();
-//            Toast.makeText(SettingActivity.this, "Logged out successfully", Toast.LENGTH_SHORT).show();
-//            // Navigate to login screen or appropriate screen after logout
-//            finish();
-//        });
+
+        logoutOption.setOnClickListener(v -> {
+            // Handle logout
+            FirebaseAuth.getInstance().signOut();
+            Toast.makeText(SettingActivity.this, "Logged out successfully", Toast.LENGTH_SHORT).show();
+            // Navigate to login screen after logout
+            Intent intent = new Intent(SettingActivity.this, SignInActivity.class);
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+            startActivity(intent);
+            finish();
+        });
+
+        CardView btnConversation = findViewById(R.id.btn_conversation);
+        btnConversation.setOnClickListener(v -> {
+            // Navigate back to ConversationActivity
+            Intent intent = new Intent(SettingActivity.this, ConversationActivity.class);
+            startActivity(intent);
+            finish(); // Finish current activity to avoid stacking
+        });
     }
 }

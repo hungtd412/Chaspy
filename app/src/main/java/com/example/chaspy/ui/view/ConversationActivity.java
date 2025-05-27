@@ -82,7 +82,7 @@ public class ConversationActivity extends AppCompatActivity {
         ImageButton btnSettings = findViewById(R.id.btn_settings);
         btnSettings.setOnClickListener(view -> {
             // Navigate to FriendsActivity
-            Intent intent = new Intent(ConversationActivity.this, FriendsActivity.class);
+            Intent intent = new Intent(ConversationActivity.this, SettingActivity.class);
             startActivity(intent);
         });
 

@@ -248,6 +248,55 @@
                     app:layout_constraintTop_toTopOf="parent" />
             </androidx.constraintlayout.widget.ConstraintLayout>
         </androidx.cardview.widget.CardView>
+
+        <!-- Logout option (New) -->
+        <androidx.cardview.widget.CardView
+            android:id="@+id/logoutOption"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            app:cardBackgroundColor="#C2E0F7"
+            app:cardCornerRadius="24dp"
+            app:cardElevation="0dp">
+
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:padding="16dp">
+
+                <ImageView
+                    android:id="@+id/iconLogout"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:src="@android:drawable/ic_lock_power_off"
+                    app:tint="#666666"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent" />
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="16dp"
+                    android:text="Logout"
+                    android:textColor="#333333"
+                    android:textSize="16sp"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toStartOf="@+id/arrowLogout"
+                    app:layout_constraintStart_toEndOf="@+id/iconLogout"
+                    app:layout_constraintTop_toTopOf="parent" />
+
+                <ImageView
+                    android:id="@+id/arrowLogout"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:src="@android:drawable/ic_media_play"
+                    app:tint="#666666"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintTop_toTopOf="parent" />
+            </androidx.constraintlayout.widget.ConstraintLayout>
+        </androidx.cardview.widget.CardView>
     </LinearLayout>
 
     <!-- Bottom action buttons -->
@@ -270,9 +319,9 @@
             android:gravity="center"
             android:weightSum="2">
 
-            <!-- Logout Button -->
+            <!-- Conversation Button (renamed from Logout) -->
             <androidx.cardview.widget.CardView
-                android:id="@+id/btn_logout"
+                android:id="@+id/btn_conversation"
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:layout_weight="1"
