@@ -304,5 +304,100 @@ public class SettingActivity extends AppCompatActivity {
             params.alpha = 1f;
             getWindow().setAttributes(params);
         });
+        
+        // Get references to views in the popup
+        EditText currentPasswordInput = popupView.findViewById(R.id.currentPasswordInput);
+        EditText newPasswordInput = popupView.findViewById(R.id.newPasswordInput);
+        EditText confirmPasswordInput = popupView.findViewById(R.id.confirmPasswordInput);
+        AppCompatButton btnChange = popupView.findViewById(R.id.btnChange);
+        AppCompatButton btnCancel = popupView.findViewById(R.id.btnCancel);
+        TextView forgotPasswordText = popupView.findViewById(R.id.forgotPasswordText);
+        
+        // Set up click listener for change button
+        btnChange.setOnClickListener(v -> {
+            String currentPassword = currentPasswordInput.getText().toString().trim();
+            String newPassword = newPasswordInput.getText().toString().trim();
+            String confirmPassword = confirmPasswordInput.getText().toString().trim();
+            
+            // Validate inputs
+            if (currentPassword.isEmpty() || newPassword.isEmpty() || confirmPassword.isEmpty()) {
+                Toast.makeText(SettingActivity.this, "All fields are required", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            
+            // Check if new password meets Firebase requirements (min 6 characters)
+            if (newPassword.length() < 6) {
+                Toast.makeText(SettingActivity.this, "Password must be at least 6 characters", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            
+            // Check if passwords match
+            if (!newPassword.equals(confirmPassword)) {
+                Toast.makeText(SettingActivity.this, "New passwords don't match", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            
+            // Disable button to prevent multiple clicks
+            btnChange.setEnabled(false);
+            btnChange.setText("Updating...");
+            
+            // Use repository to change password
+            userRepository.changePassword(currentPassword, newPassword)
+                .addOnCompleteListener(task -> {
+                    // Re-enable button
+                    btnChange.setEnabled(true);
+                    btnChange.setText("Change");
+                    
+                    if (task.isSuccessful()) {
+                        Toast.makeText(SettingActivity.this, "Password updated successfully", Toast.LENGTH_SHORT).show();
+                        popupWindow.dismiss();
+                    } else {
+                        // Handle different error cases
+                        String message = "Failed to update password";
+                        if (task.getException() != null) {
+                            String errorMessage = task.getException().getMessage();
+                            if (errorMessage != null && errorMessage.contains("password is invalid")) {
+                                message = "Current password is incorrect";
+                            }
+                        }
+                        Toast.makeText(SettingActivity.this, message, Toast.LENGTH_SHORT).show();
+                    }
+                });
+        });
+        
+        // Set up click listener for forgot password link
+        forgotPasswordText.setOnClickListener(v -> {
+            FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+            if (user != null) {
+                String email = user.getEmail();
+                if (email != null && !email.isEmpty()) {
+                    // Disable forgot password text temporarily
+                    forgotPasswordText.setEnabled(false);
+                    forgotPasswordText.setText("Sending email...");
+                    
+                    // Send password reset email
+                    userRepository.sendPasswordResetEmail(email)
+                        .addOnCompleteListener(task -> {
+                            // Re-enable the text
+                            forgotPasswordText.setEnabled(true);
+                            forgotPasswordText.setText("Forgot password");
+                            
+                            if (task.isSuccessful()) {
+                                Toast.makeText(SettingActivity.this, 
+                                    "Password reset email sent to " + email, 
+                                    Toast.LENGTH_SHORT).show();
+                                popupWindow.dismiss();
+                            } else {
+                                Toast.makeText(SettingActivity.this, 
+                                    "Failed to send reset email", 
+                                    Toast.LENGTH_SHORT).show();
+                            }
+                        });
+                }
+            }
+        });
+        
+        // Set up cancel button
+        btnCancel.setOnClickListener(v -> popupWindow.dismiss());
     }
 }

@@ -49,14 +49,17 @@ public class UserRepository {
         return userFirebaseService.saveUserData(firebaseUser, firstName, lastName);
     }
 
-    /**
-     * Update user profile information
-     * @param userId The ID of the user to update
-     * @param firstName New first name
-     * @param lastName New last name
-     * @return Task representing the result of the update operation
-     */
+
     public Task<Void> updateUserProfile(String userId, String firstName, String lastName) {
         return userFirebaseService.updateUserProfile(userId, firstName, lastName);
+    }
+
+    public Task<Void> changePassword(String currentPassword, String newPassword) {
+        return userFirebaseService.changePassword(currentPassword, newPassword);
+    }
+    
+
+    public Task<Void> sendPasswordResetEmail(String email) {
+        return userFirebaseService.sendPasswordResetEmail(email);
     }
 }

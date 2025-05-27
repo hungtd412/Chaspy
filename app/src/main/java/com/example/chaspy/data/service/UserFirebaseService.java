@@ -108,6 +108,42 @@ public class UserFirebaseService {
         return usersRef.child(userId).updateChildren(updates);
     }
 
+    /**
+     * Change user password
+     * @param currentPassword The user's current password
+     * @param newPassword The new password to set
+     * @return Task representing the result of the password change operation
+     */
+    public Task<Void> changePassword(String currentPassword, String newPassword) {
+        FirebaseUser user = firebaseAuth.getCurrentUser();
+        if (user == null) {
+            TaskCompletionSource<Void> taskCompletionSource = new TaskCompletionSource<>();
+            taskCompletionSource.setException(new Exception("User not authenticated"));
+            return taskCompletionSource.getTask();
+        }
+
+        // Re-authenticate user first (required by Firebase for security-sensitive operations)
+        return firebaseAuth.signInWithEmailAndPassword(user.getEmail(), currentPassword)
+            .continueWithTask(signInTask -> {
+                if (signInTask.isSuccessful()) {
+                    // User re-authenticated successfully, now update password
+                    return user.updatePassword(newPassword);
+                } else {
+                    // Re-authentication failed
+                    throw signInTask.getException();
+                }
+            });
+    }
+    
+    /**
+     * Send password reset email to the specified email address
+     * @param email Email address to send reset link to
+     * @return Task representing the result of the password reset email operation
+     */
+    public Task<Void> sendPasswordResetEmail(String email) {
+        return firebaseAuth.sendPasswordResetEmail(email);
+    }
+
     // Fetch and cache the default avatar URL
     private void fetchDefaultAvatarUrl() {
         DatabaseReference defaultAvatarRef = FirebaseDatabase.getInstance().getReference("general_information").child("default_avatar");
