@@ -5,9 +5,12 @@ import android.os.Bundle;
 import android.util.Log;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.view.View;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.cardview.widget.CardView;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.RequestOptions;
@@ -24,10 +27,10 @@ import com.google.firebase.database.ValueEventListener;
 public class SettingActivity extends AppCompatActivity {
 
     private static final String TAG = "SettingActivity";
-    private ImageView profileImageView;
-    private TextView fullNameTextView;
-    private MaterialButton editUsernameButton, editPasswordButton, friendManagersButton;
-    
+    private ImageView profileImage;
+    private TextView txtUsername;
+    private CardView editUsernameOption, editPasswordOption, friendsManagerOption, btn_logout;
+
     private FirebaseAuth firebaseAuth;
     private DatabaseReference databaseReference;
     private String currentUserId;
@@ -35,8 +38,8 @@ public class SettingActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_settings);
-        
+        setContentView(R.layout.activity_setting);
+
         // Initialize Firebase Auth and Database
         firebaseAuth = FirebaseAuth.getInstance();
         FirebaseUser currentUser = firebaseAuth.getCurrentUser();
@@ -46,24 +49,31 @@ public class SettingActivity extends AppCompatActivity {
             finish();
             return;
         }
-        
+
         currentUserId = currentUser.getUid();
         databaseReference = FirebaseDatabase.getInstance().getReference();
-        
+
         // Initialize views
-        profileImageView = findViewById(R.id.imageViewProfile);
-        fullNameTextView = findViewById(R.id.textViewFullName);
-        editUsernameButton = findViewById(R.id.buttonEditUsername);
-        editPasswordButton = findViewById(R.id.buttonEditPassword);
-        friendManagersButton = findViewById(R.id.buttonFriendManagers);
-        
+        profileImage = findViewById(R.id.profileImage);
+        txtUsername = findViewById(R.id.txtUsername);
+        editUsernameOption = findViewById(R.id.editUsernameOption);
+        editPasswordOption = findViewById(R.id.editPasswordOption);
+        friendsManagerOption = findViewById(R.id.friendsManagerOption);
+        btn_logout = findViewById(R.id.btn_logout);
+        CardView editProfileBtn = findViewById(R.id.editProfileBtn);
+
         // Load user data
         loadUserData();
-        
+
         // Set up button click listeners
         setupClickListeners();
+        
+        // Set up profile edit button
+        editProfileBtn.setOnClickListener(v -> {
+            Toast.makeText(SettingActivity.this, "Edit profile picture feature coming soon", Toast.LENGTH_SHORT).show();
+        });
     }
-    
+
     private void loadUserData() {
         DatabaseReference userRef = databaseReference.child("users").child(currentUserId);
         userRef.addValueEventListener(new ValueEventListener() {
@@ -74,11 +84,21 @@ public class SettingActivity extends AppCompatActivity {
                     String firstName = snapshot.child("firstName").getValue(String.class);
                     String lastName = snapshot.child("lastName").getValue(String.class);
                     String profilePicUrl = snapshot.child("profilePicUrl").getValue(String.class);
-                    
+
                     // Display full name
-                    String fullName = firstName + " " + lastName;
-                    fullNameTextView.setText(fullName);
+                    String fullName = "";
+                    if (firstName != null && lastName != null) {
+                        fullName = firstName + " " + lastName;
+                    } else if (firstName != null) {
+                        fullName = firstName;
+                    } else if (lastName != null) {
+                        fullName = lastName;
+                    } else {
+                        fullName = "User";
+                    }
                     
+                    txtUsername.setText(fullName.toUpperCase());
+
                     // Load profile image
                     if (profilePicUrl != null && !profilePicUrl.isEmpty()) {
                         loadProfileImage(profilePicUrl);
@@ -88,25 +108,29 @@ public class SettingActivity extends AppCompatActivity {
                     }
                 } else {
                     Log.e(TAG, "User data not found in the database");
+                    txtUsername.setText("USER");
+                    loadDefaultAvatar();
                 }
             }
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
                 Log.e(TAG, "Database error: " + error.getMessage());
+                txtUsername.setText("USER");
+                loadDefaultAvatar();
             }
         });
     }
-    
+
     private void loadProfileImage(String imageUrl) {
         Glide.with(this)
             .load(imageUrl)
             .apply(RequestOptions.circleCropTransform())
-            .placeholder(R.drawable.ic_person_placeholder) // Add a placeholder drawable resource
-            .error(R.drawable.ic_person_placeholder) // Add an error drawable resource
-            .into(profileImageView);
+            .placeholder(R.drawable.background_parrot) // Using available drawable from XML
+            .error(R.drawable.background_parrot)
+            .into(profileImage);
     }
-    
+
     private void loadDefaultAvatar() {
         // Get default avatar URL from general_information node
         DatabaseReference defaultAvatarRef = databaseReference.child("general_information").child("default_avatar");
@@ -118,7 +142,7 @@ public class SettingActivity extends AppCompatActivity {
                     loadProfileImage(defaultAvatarUrl);
                 } else {
                     // If default avatar URL is not found, use a local resource
-                    profileImageView.setImageResource(R.drawable.ic_person_placeholder); // Add a placeholder drawable resource
+                    profileImage.setImageResource(R.drawable.background_parrot);
                 }
             }
 
@@ -126,26 +150,34 @@ public class SettingActivity extends AppCompatActivity {
             public void onCancelled(@NonNull DatabaseError error) {
                 Log.e(TAG, "Database error: " + error.getMessage());
                 // Use a local resource as fallback
-                profileImageView.setImageResource(R.drawable.ic_person_placeholder); // Add a placeholder drawable resource
+                profileImage.setImageResource(R.drawable.background_parrot);
             }
         });
     }
-    
+
     private void setupClickListeners() {
-        editUsernameButton.setOnClickListener(v -> {
+        editUsernameOption.setOnClickListener(v -> {
             // Handle edit username click
-            // TODO: Implement username editing functionality
+            Toast.makeText(SettingActivity.this, "Edit username feature coming soon", Toast.LENGTH_SHORT).show();
         });
-        
-        editPasswordButton.setOnClickListener(v -> {
+
+        editPasswordOption.setOnClickListener(v -> {
             // Handle edit password click
-            // TODO: Implement password changing functionality
+            Toast.makeText(SettingActivity.this, "Edit password feature coming soon", Toast.LENGTH_SHORT).show();
         });
-        
-        friendManagersButton.setOnClickListener(v -> {
+
+        friendsManagerOption.setOnClickListener(v -> {
             // Navigate to FriendsActivity
             Intent intent = new Intent(SettingActivity.this, FriendsActivity.class);
             startActivity(intent);
         });
+        
+//        btn_logout.setOnClickListener(v -> {
+//            // Handle logout
+//            FirebaseAuth.getInstance().signOut();
+//            Toast.makeText(SettingActivity.this, "Logged out successfully", Toast.LENGTH_SHORT).show();
+//            // Navigate to login screen or appropriate screen after logout
+//            finish();
+//        });
     }
 }

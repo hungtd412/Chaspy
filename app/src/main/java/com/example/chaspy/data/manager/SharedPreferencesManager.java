@@ -133,7 +133,8 @@ public class SharedPreferencesManager {
     }
 
     public boolean isLoggedIn() {
-        return sharedPreferences.getBoolean(KEY_IS_LOGGED_IN, false);
+        return false;
+//        return sharedPreferences.getBoolean(KEY_IS_LOGGED_IN, false);
     }
 
     public boolean isRememberAccount() {
