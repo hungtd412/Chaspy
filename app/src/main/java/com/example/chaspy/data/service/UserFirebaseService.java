@@ -12,6 +12,9 @@ import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.android.gms.tasks.TaskCompletionSource;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public class UserFirebaseService {
 
     private static FirebaseAuth firebaseAuth;
@@ -86,6 +89,59 @@ public class UserFirebaseService {
                 throw task.getException();
             }
         });
+    }
+
+    /**
+     * Update user profile data (first name and last name)
+     * @param userId The user ID to update
+     * @param firstName New first name
+     * @param lastName New last name
+     * @return Task result of the update operation
+     */
+    public Task<Void> updateUserProfile(String userId, String firstName, String lastName) {
+        // Create a map of the fields to update
+        Map<String, Object> updates = new HashMap<>();
+        updates.put("firstName", firstName);
+        updates.put("lastName", lastName);
+        
+        // Update all fields simultaneously
+        return usersRef.child(userId).updateChildren(updates);
+    }
+
+    /**
+     * Change user password
+     * @param currentPassword The user's current password
+     * @param newPassword The new password to set
+     * @return Task representing the result of the password change operation
+     */
+    public Task<Void> changePassword(String currentPassword, String newPassword) {
+        FirebaseUser user = firebaseAuth.getCurrentUser();
+        if (user == null) {
+            TaskCompletionSource<Void> taskCompletionSource = new TaskCompletionSource<>();
+            taskCompletionSource.setException(new Exception("User not authenticated"));
+            return taskCompletionSource.getTask();
+        }
+
+        // Re-authenticate user first (required by Firebase for security-sensitive operations)
+        return firebaseAuth.signInWithEmailAndPassword(user.getEmail(), currentPassword)
+            .continueWithTask(signInTask -> {
+                if (signInTask.isSuccessful()) {
+                    // User re-authenticated successfully, now update password
+                    return user.updatePassword(newPassword);
+                } else {
+                    // Re-authentication failed
+                    throw signInTask.getException();
+                }
+            });
+    }
+    
+    /**
+     * Send password reset email to the specified email address
+     * @param email Email address to send reset link to
+     * @return Task representing the result of the password reset email operation
+     */
+    public Task<Void> sendPasswordResetEmail(String email) {
+        return firebaseAuth.sendPasswordResetEmail(email);
     }
 
     // Fetch and cache the default avatar URL

@@ -48,5 +48,18 @@ public class UserRepository {
         FirebaseUser firebaseUser = task.getResult().getUser();
         return userFirebaseService.saveUserData(firebaseUser, firstName, lastName);
     }
-}
 
+
+    public Task<Void> updateUserProfile(String userId, String firstName, String lastName) {
+        return userFirebaseService.updateUserProfile(userId, firstName, lastName);
+    }
+
+    public Task<Void> changePassword(String currentPassword, String newPassword) {
+        return userFirebaseService.changePassword(currentPassword, newPassword);
+    }
+    
+
+    public Task<Void> sendPasswordResetEmail(String email) {
+        return userFirebaseService.sendPasswordResetEmail(email);
+    }
+}
