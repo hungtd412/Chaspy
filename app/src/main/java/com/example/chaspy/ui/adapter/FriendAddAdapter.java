@@ -15,6 +15,7 @@ import com.example.chaspy.R;
 import com.example.chaspy.data.model.User;
 import com.squareup.picasso.Picasso;
 
+
 import java.util.ArrayList;
 import java.util.Map;
 
@@ -65,20 +66,20 @@ public class FriendAddAdapter extends RecyclerView.Adapter<FriendAddAdapter.User
     public void onBindViewHolder(@NonNull UserViewHolder holder, int position) {
         User user = usersArrayList.get(position);
         holder.getUserName().setText(user.getUserName());
-        
+
         // Hide or repurpose userStatus - we don't show email anymore
         holder.getUserStatus().setVisibility(View.GONE);
-        
+
         // Load the user's profile image
         Picasso.get().load(user.getProfilePicUrl()).into(holder.getUserImg());
-        
+
         // Set button state based on friend request status
         if (sentFriendRequests != null && sentFriendRequests.containsKey(user.getUid())) {
             // Request already sent - show cancel option
             Button btnAddFriend = holder.getAddFriendButton();
             btnAddFriend.setText("Cancel");
             btnAddFriend.setEnabled(true);
-            
+
             // Set cancel request click listener
             btnAddFriend.setOnClickListener(view -> {
                 if (addFriendListener != null) {
@@ -95,7 +96,7 @@ public class FriendAddAdapter extends RecyclerView.Adapter<FriendAddAdapter.User
             Button btnAddFriend = holder.getAddFriendButton();
             btnAddFriend.setText("Add");
             btnAddFriend.setEnabled(true);
-            
+
             // Setup add friend button click
             btnAddFriend.setOnClickListener(view -> {
                 if (addFriendListener != null) {
@@ -134,7 +135,7 @@ public class FriendAddAdapter extends RecyclerView.Adapter<FriendAddAdapter.User
         public TextView getUserStatus() {
             return userStatus;
         }
-        
+
         public Button getAddFriendButton() {
             return btnAddFriend;
         }

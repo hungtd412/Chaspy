@@ -50,7 +50,7 @@
             app:layout_constraintStart_toEndOf="@+id/userImg"
             app:layout_constraintTop_toBottomOf="@+id/userName" />
 
-        <com.google.android.material.button.MaterialButton
+        <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/btnAddFriend"
             android:layout_width="wrap_content"
             android:layout_height="36dp"

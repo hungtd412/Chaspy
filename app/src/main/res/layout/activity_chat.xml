@@ -32,10 +32,10 @@
 
                 <ImageView
                     android:layout_width="24dp"
-                    android:layout_height="24dp"
+                    android:layout_height="17dp"
                     android:layout_gravity="center"
-                    android:src="@android:drawable/ic_media_previous"
-                    app:tint="#2196F3" />
+                    android:src="@drawable/ic_left"
+                    app:tint="#80333333" />
             </androidx.cardview.widget.CardView>
 
             <de.hdodenhof.circleimageview.CircleImageView
@@ -65,7 +65,7 @@
                 android:id="@+id/btnMenu"
                 android:layout_width="24dp"
                 android:layout_height="24dp"
-                android:src="@android:drawable/ic_menu_more"
+                android:src="@drawable/ic_burger"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
@@ -114,6 +114,7 @@
                     android:layout_height="wrap_content"
                     android:layout_gravity="center"
                     android:text="+"
+                    android:textColor="#80333333"
                     android:textSize="24sp"
                     android:textStyle="bold" />
             </androidx.cardview.widget.CardView>
@@ -133,7 +134,7 @@
                     android:layout_width="24dp"
                     android:layout_height="24dp"
                     android:layout_gravity="center"
-                    android:src="@android:drawable/ic_menu_gallery" />
+                    android:src="@drawable/ic_image" />
             </androidx.cardview.widget.CardView>
 
             <EditText
@@ -168,8 +169,8 @@
                     android:layout_width="24dp"
                     android:layout_height="24dp"
                     android:layout_gravity="center"
-                    android:src="@android:drawable/ic_menu_send"
-                    android:rotation="45" />
+                    android:src="@drawable/ic_send"
+                    android:rotation="0" />
             </androidx.cardview.widget.CardView>
 
         </androidx.constraintlayout.widget.ConstraintLayout>

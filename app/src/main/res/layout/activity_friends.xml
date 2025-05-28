@@ -6,6 +6,20 @@
     android:layout_height="match_parent"
     android:background="@android:color/white">
 
+    <ImageButton
+        android:id="@+id/btnBack"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_marginStart="16dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:contentDescription="Back button"
+        android:padding="12dp"
+        android:src="@drawable/ic_left"
+        app:tint="#5D9CEC"
+        app:layout_constraintBottom_toBottomOf="@+id/tvFriendsManagerTitle"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/tvFriendsManagerTitle" />
+
     <TextView
         android:id="@+id/tvFriendsManagerTitle"
         android:layout_width="wrap_content"

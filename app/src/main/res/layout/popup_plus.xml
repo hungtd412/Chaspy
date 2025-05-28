@@ -3,7 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="150dp"
     android:layout_height="wrap_content"
-    android:layout_gravity="end|top"
+    android:layout_gravity="start|bottom"
     app:cardCornerRadius="24dp"
     app:cardElevation="6dp"
     app:cardBackgroundColor="#FFFFFF">
@@ -13,9 +13,9 @@
         android:layout_height="wrap_content"
         android:orientation="vertical">
 
-        <!-- Edit nickname option -->
+        <!-- Camera option -->
         <androidx.constraintlayout.widget.ConstraintLayout
-            android:id="@+id/nicknameLayout"
+            android:id="@+id/cameraLayout"
             android:layout_width="match_parent"
             android:layout_height="56dp"
             android:background="?android:attr/selectableItemBackground"
@@ -26,7 +26,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Edit nickname"
+                android:text="Camera"
                 android:textColor="#424242"
                 android:textSize="14sp"
                 app:layout_constraintBottom_toBottomOf="parent"
@@ -36,7 +36,7 @@
             <ImageView
                 android:layout_width="20dp"
                 android:layout_height="20dp"
-                android:src="@drawable/ic_name"
+                android:src="@drawable/ic_camera"
                 app:tint="#757575"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
@@ -44,15 +44,15 @@
 
         </androidx.constraintlayout.widget.ConstraintLayout>
 
-        <!-- Divider - making it more visible -->
+        <!-- Divider -->
         <View
             android:layout_width="match_parent"
             android:layout_height="1dp"
             android:background="#E0E0E0" />
 
-        <!-- Edit theme option -->
+        <!-- Location option -->
         <androidx.constraintlayout.widget.ConstraintLayout
-            android:id="@+id/themeLayout"
+            android:id="@+id/locationLayout"
             android:layout_width="match_parent"
             android:layout_height="56dp"
             android:background="?android:attr/selectableItemBackground"
@@ -63,7 +63,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Edit theme"
+                android:text="Send location"
                 android:textColor="#424242"
                 android:textSize="14sp"
                 app:layout_constraintBottom_toBottomOf="parent"
@@ -73,7 +73,7 @@
             <ImageView
                 android:layout_width="20dp"
                 android:layout_height="20dp"
-                android:src="@drawable/ic_theme"
+                android:src="@drawable/ic_location"
                 app:tint="#757575"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
