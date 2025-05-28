@@ -11,6 +11,7 @@ import androidx.lifecycle.ViewModel;
 import com.example.chaspy.data.model.User;
 import com.example.chaspy.data.repository.UserRepository;
 import com.google.android.gms.tasks.Task;
+import com.google.android.gms.tasks.Tasks;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
@@ -146,14 +147,6 @@ public class SettingViewModel extends ViewModel {
         userRepository.signOut();
     }
     
-//    public Task<Void> updateProfilePictureInFirebase(String newProfilePicUrl) {
-//        String userId = getCurrentUserId();
-//        if (userId == null) {
-//            throw new IllegalStateException("User not logged in");
-//        }
-//        return userRepository.updateProfilePicture(userId, newProfilePicUrl);
-//    }
-    
     public Task<String> uploadProfileImage(Context context, Uri imageUri) {
         isLoading.setValue(true);
         String userId = getCurrentUserId();
@@ -162,21 +155,43 @@ public class SettingViewModel extends ViewModel {
             throw new IllegalStateException("User not logged in");
         }
         
+        // Get current user data to access the current profile picture URL
+        User currentUser = userData.getValue();
+        String oldProfilePicUrl = currentUser != null ? currentUser.getProfilePicUrl() : null;
+        
         return userRepository.uploadImageToCloudinary(context, imageUri)
             .continueWithTask(uploadTask -> {
                 if (!uploadTask.isSuccessful()) {
                     throw uploadTask.getException();
                 }
                 
-                String imageUrl = uploadTask.getResult();
+                String newImageUrl = uploadTask.getResult();
                 // After successful upload to Cloudinary, update the user's profile in Firebase
-                return userRepository.updateProfilePicture(userId, imageUrl).continueWith(updateTask -> {
-                    isLoading.setValue(false);
-                    if (!updateTask.isSuccessful()) {
-                        throw updateTask.getException();
-                    }
-                    return imageUrl;
-                });
+                return userRepository.updateProfilePicture(userId, newImageUrl)
+                    .continueWithTask(updateTask -> {
+                        if (!updateTask.isSuccessful()) {
+                            throw updateTask.getException();
+                        }
+                        
+                        // Only delete the old image if it exists and is not the default image
+                        if (oldProfilePicUrl != null && !oldProfilePicUrl.isEmpty() && 
+                            !userRepository.containsDefaultProfileString(oldProfilePicUrl)) {
+                            
+                            Log.d(TAG, "Deleting old profile image: " + oldProfilePicUrl);
+                            return userRepository.deleteImageFromCloudinary(context, oldProfilePicUrl)
+                                .continueWith(deleteTask -> {
+                                    isLoading.setValue(false);
+                                    if (!deleteTask.isSuccessful()) {
+                                        Log.e(TAG, "Failed to delete old profile image", deleteTask.getException());
+                                        // Still return the new URL even if deletion fails
+                                    }
+                                    return newImageUrl;
+                                });
+                        } else {
+                            isLoading.setValue(false);
+                            return Tasks.forResult(newImageUrl);
+                        }
+                    });
             });
     }
     

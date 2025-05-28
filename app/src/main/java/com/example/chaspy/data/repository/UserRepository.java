@@ -8,6 +8,7 @@ import com.example.chaspy.data.service.UserFirebaseService;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.android.gms.tasks.Task;
+import com.google.android.gms.tasks.Tasks;
 
 public class UserRepository {
 
@@ -86,5 +87,22 @@ public class UserRepository {
     // Upload image to Cloudinary
     public Task<String> uploadImageToCloudinary(Context context, Uri imageUri) {
         return cloudinaryService.uploadImage(context, imageUri);
+    }
+    
+    // Delete image from Cloudinary
+    public Task<Boolean> deleteImageFromCloudinary(Context context, String imageUrl) {
+        // Skip deletion if it's the default avatar
+        if (imageUrl == null || imageUrl.isEmpty() || cloudinaryService.isDefaultProfileImage(imageUrl)) {
+            return Tasks.forResult(false);
+        }
+        
+        // Extract the public ID from the URL
+        String publicId = cloudinaryService.extractPublicIdFromUrl(imageUrl);
+        if (publicId == null) {
+            return Tasks.forException(new IllegalArgumentException("Invalid Cloudinary URL"));
+        }
+        
+        // Delete the image using the public ID
+        return cloudinaryService.deleteImage(context, publicId);
     }
 }
