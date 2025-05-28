@@ -426,7 +426,7 @@ public class ChatActivity extends AppCompatActivity {
 
         // Set click listeners for popup items
         View cameraLayout = popupView.findViewById(R.id.cameraLayout);
-        View locationLayout = popupView.findViewById(R.id.locationLayout);
+        View locationLayout = popupView.findViewById(R.id.timeLayout);
 
         cameraLayout.setOnClickListener(v -> {
             // Handle camera action

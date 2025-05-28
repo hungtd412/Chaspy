@@ -109,14 +109,11 @@
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent">
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
+                <ImageView
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
                     android:layout_gravity="center"
-                    android:text="+"
-                    android:textColor="#80333333"
-                    android:textSize="24sp"
-                    android:textStyle="bold" />
+                    android:src="@drawable/ic_add" />
             </androidx.cardview.widget.CardView>
 
             <androidx.cardview.widget.CardView
