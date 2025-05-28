@@ -1,74 +1,64 @@
 <?xml version="1.0" encoding="utf-8"?>
-<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    app:cardElevation="0dp"
-    app:cardCornerRadius="0dp"
-    app:strokeWidth="0dp"
-    android:background="@android:color/transparent">
+    android:layout_margin="4dp"
+    app:cardCornerRadius="12dp">
 
-    <androidx.slidingpanelayout.widget.SlidingPaneLayout
-        android:id="@+id/slidingLayout"
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        android:padding="8dp">
 
-        <!-- Main content -->
-        <androidx.constraintlayout.widget.ConstraintLayout
-            android:layout_width="match_parent"
+        <de.hdodenhof.circleimageview.CircleImageView
+            android:id="@+id/ivRequestProfilePic"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:src="@drawable/default_profile_image"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <TextView
+            android:id="@+id/tvRequestName"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:padding="8dp">
+            android:layout_marginStart="16dp"
+            android:layout_marginEnd="16dp"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:text="Username"
+            android:textColor="#333333"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            app:layout_constraintBottom_toBottomOf="@+id/ivRequestProfilePic"
+            app:layout_constraintEnd_toStartOf="@+id/btnAccept"
+            app:layout_constraintStart_toEndOf="@+id/ivRequestProfilePic"
+            app:layout_constraintTop_toTopOf="@+id/ivRequestProfilePic" />
 
-            <de.hdodenhof.circleimageview.CircleImageView
-                android:id="@+id/ivRequestProfilePic"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:src="@drawable/default_profile_image"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
+        <ImageButton
+            android:id="@+id/btnAccept"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:layout_marginEnd="8dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@drawable/ic_accept"
+            android:contentDescription="Accept request"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@+id/btnReject"
+            app:layout_constraintTop_toTopOf="parent" />
 
-            <TextView
-                android:id="@+id/tvRequestName"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="16dp"
-                android:ellipsize="end"
-                android:maxLines="1"
-                android:text="Username"
-                android:textColor="#333333"
-                android:textSize="16sp"
-                app:layout_constraintBottom_toBottomOf="@+id/ivRequestProfilePic"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toEndOf="@+id/ivRequestProfilePic"
-                app:layout_constraintTop_toTopOf="@+id/ivRequestProfilePic" />
+        <ImageButton
+            android:id="@+id/btnReject"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@drawable/ic_reject"
+            android:contentDescription="Reject request"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
 
-        </androidx.constraintlayout.widget.ConstraintLayout>
-
-        <!-- Action buttons shown on swipe -->
-        <LinearLayout
-            android:layout_width="120dp"
-            android:layout_height="match_parent"
-            android:orientation="horizontal"
-            android:weightSum="2">
-
-            <ImageButton
-                android:id="@+id/btnAccept"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:background="#A15D9CEC"
-                android:src="@drawable/ic_accept"
-                android:contentDescription="Accept request" />
-
-            <ImageButton
-                android:id="@+id/btnReject"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:background="#91FF5252"
-                android:src="@drawable/ic_reject"
-                android:contentDescription="Reject request" />
-        </LinearLayout>
-    </androidx.slidingpanelayout.widget.SlidingPaneLayout>
-</com.google.android.material.card.MaterialCardView>
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</androidx.cardview.widget.CardView>

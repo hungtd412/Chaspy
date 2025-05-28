@@ -1,12 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    app:cardElevation="0dp"
-    app:cardCornerRadius="0dp"
-    app:strokeWidth="0dp"
-    android:background="@android:color/transparent">
+    android:layout_margin="4dp"
+    app:cardCornerRadius="12dp">
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
@@ -15,8 +13,8 @@
 
         <de.hdodenhof.circleimageview.CircleImageView
             android:id="@+id/userImg"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
             android:src="@drawable/default_profile_image"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
@@ -33,7 +31,8 @@
             android:text="Username"
             android:textColor="#333333"
             android:textSize="16sp"
-            app:layout_constraintBottom_toBottomOf="@+id/userImg"
+            android:textStyle="bold"
+            app:layout_constraintBottom_toTopOf="@+id/userStatus"
             app:layout_constraintEnd_toStartOf="@+id/btnAddFriend"
             app:layout_constraintStart_toEndOf="@+id/userImg"
             app:layout_constraintTop_toTopOf="@+id/userImg" />
@@ -44,8 +43,9 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="16dp"
             android:layout_marginEnd="16dp"
-            android:textSize="14sp"
+            android:textSize="12sp"
             android:visibility="gone"
+            app:layout_constraintBottom_toBottomOf="@+id/userImg"
             app:layout_constraintEnd_toStartOf="@+id/btnAddFriend"
             app:layout_constraintStart_toEndOf="@+id/userImg"
             app:layout_constraintTop_toBottomOf="@+id/userName" />
@@ -54,12 +54,11 @@
             android:id="@+id/btnAddFriend"
             android:layout_width="wrap_content"
             android:layout_height="36dp"
-            android:layout_marginEnd="8dp"
-            android:text="Add"
-            android:textSize="12sp"
-            android:textColor="#FFFFFF"
             android:backgroundTint="#5D9CEC"
-            app:cornerRadius="18dp"
+            android:text="Add"
+            android:textColor="#FFFFFF"
+            android:textSize="12sp"
+            app:cornerRadius="20dp"
             app:iconGravity="textStart"
             app:iconTint="#FFFFFF"
             app:layout_constraintBottom_toBottomOf="parent"
@@ -67,5 +66,4 @@
             app:layout_constraintTop_toTopOf="parent" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
-
-</com.google.android.material.card.MaterialCardView>
+</androidx.cardview.widget.CardView>

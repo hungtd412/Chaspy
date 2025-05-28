@@ -9,7 +9,6 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
-import androidx.slidingpanelayout.widget.SlidingPaneLayout;
 
 import com.bumptech.glide.Glide;
 import com.example.chaspy.R;
@@ -77,9 +76,6 @@ public class FriendRequestAdapter extends RecyclerView.Adapter<FriendRequestAdap
     public void onBindViewHolder(@NonNull FriendRequestViewHolder holder, int position) {
         FriendRequest request = filteredFriendRequests.get(position);
         holder.bind(request, position);
-
-        // Reset sliding pane state when recycling views
-        holder.slidingLayout.closePane();
     }
 
     @Override
@@ -109,19 +105,15 @@ public class FriendRequestAdapter extends RecyclerView.Adapter<FriendRequestAdap
         CircleImageView ivProfilePic;
         TextView tvName;
         ImageButton btnAccept, btnReject;
-        SlidingPaneLayout slidingLayout;
-        View mainContent;
+        View itemView;
 
         FriendRequestViewHolder(@NonNull View itemView) {
             super(itemView);
+            this.itemView = itemView;
             ivProfilePic = itemView.findViewById(R.id.ivRequestProfilePic);
             tvName = itemView.findViewById(R.id.tvRequestName);
             btnAccept = itemView.findViewById(R.id.btnAccept);
             btnReject = itemView.findViewById(R.id.btnReject);
-            slidingLayout = itemView.findViewById(R.id.slidingLayout);
-
-            // The first child of SlidingPaneLayout is the main content
-            mainContent = ((ViewGroup) slidingLayout).getChildAt(0);
         }
 
         void bind(final FriendRequest request, final int position) {
@@ -151,8 +143,8 @@ public class FriendRequestAdapter extends RecyclerView.Adapter<FriendRequestAdap
                 }
             });
 
-            // Make the main content area clickable
-            mainContent.setOnClickListener(v -> {
+            // Make the whole item clickable
+            itemView.setOnClickListener(v -> {
                 if (actionListener != null) {
                     actionListener.onRequestClick(request, position);
                 }
