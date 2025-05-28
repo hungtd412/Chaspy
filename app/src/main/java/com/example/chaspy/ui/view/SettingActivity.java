@@ -14,231 +14,222 @@ import android.view.Gravity;
 import android.view.WindowManager;
 import android.widget.LinearLayout;
 import android.widget.PopupWindow;
-import androidx.annotation.NonNull;
+import android.app.ProgressDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.AppCompatButton;
 import androidx.cardview.widget.CardView;
+import androidx.lifecycle.ViewModelProvider;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.RequestOptions;
 import com.example.chaspy.R;
 import com.example.chaspy.data.manager.SharedPreferencesManager;
-import com.example.chaspy.data.repository.UserRepository;
-import com.google.android.material.button.MaterialButton;
-import com.google.firebase.auth.FirebaseAuth;
+import com.example.chaspy.data.model.User;
+import com.example.chaspy.ui.viewmodel.SettingViewModel;
 import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.database.DataSnapshot;
-import com.google.firebase.database.DatabaseError;
-import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.ValueEventListener;
 
 public class SettingActivity extends AppCompatActivity {
 
     private static final String TAG = "SettingActivity";
     private ImageView profileImage;
     private TextView txtUsername;
-    private CardView editUsernameOption, editPasswordOption, friendsManagerOption, logoutOption;
-
-    private FirebaseAuth firebaseAuth;
-    private DatabaseReference databaseReference;
-    private String currentUserId;
-
+    private CardView editProfileBtn, editUsernameOption, editPasswordOption, friendsManagerOption, logoutOption, btnConversation;
     private SharedPreferencesManager preferencesManager;
-    private UserRepository userRepository; // Add this as a class field
+    private SettingViewModel viewModel;
+    private ProgressDialog progressDialog;
 
+    // Activity Result Launcher for gallery picker
+    private ActivityResultLauncher<String> galleryLauncher;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_setting);
 
-        // Initialize Firebase Auth and Database
-        firebaseAuth = FirebaseAuth.getInstance();
-        FirebaseUser currentUser = firebaseAuth.getCurrentUser();
-        if (currentUser == null) {
-            // Handle the case when user is not logged in
+        // Initialize ViewModel
+        viewModel = new ViewModelProvider(this).get(SettingViewModel.class);
+
+        if (!viewModel.isUserLoggedIn()) {
             Log.e(TAG, "User not logged in");
-            finish();
+            navigateToSignIn();
             return;
         }
 
-        userRepository = new UserRepository();
+        preferencesManager = new SharedPreferencesManager(this);
 
-        currentUserId = currentUser.getUid();
-        databaseReference = FirebaseDatabase.getInstance().getReference();
+        initializeViews();
 
-        // Initialize views
+        // Initialize the gallery launcher
+        registerGalleryLauncher();
+
+        setupObservers();
+
+        viewModel.loadUserData();
+
+        setupClickListeners();
+    }
+
+    private void registerGalleryLauncher() {
+        galleryLauncher = registerForActivityResult(
+            new ActivityResultContracts.GetContent(),
+            result -> {
+                if (result != null) {
+                    // Show loading indicator
+                    showLoading("Uploading image...");
+                    
+                    // Upload image to Cloudinary
+                    viewModel.uploadProfileImage(this, result)
+                        .addOnSuccessListener(imageUrl -> {
+                            // Update UI with the new image
+                            Glide.with(this)
+                                .load(imageUrl)
+                                .apply(RequestOptions.circleCropTransform())
+                                .into(profileImage);
+                            
+                            hideLoading();
+                            Toast.makeText(SettingActivity.this, "Profile picture updated successfully", Toast.LENGTH_SHORT).show();
+                        })
+                        .addOnFailureListener(e -> {
+                            hideLoading();
+                            Toast.makeText(SettingActivity.this, "Failed to upload image: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                            Log.e(TAG, "Image upload failed", e);
+                        });
+                }
+            }
+        );
+    }
+
+    private void showLoading(String message) {
+        if (progressDialog == null) {
+            progressDialog = new ProgressDialog(this);
+            progressDialog.setCancelable(false);
+        }
+        progressDialog.setMessage(message);
+        progressDialog.show();
+    }
+    
+    private void hideLoading() {
+        if (progressDialog != null && progressDialog.isShowing()) {
+            progressDialog.dismiss();
+        }
+    }
+
+    private void initializeViews() {
         profileImage = findViewById(R.id.profileImage);
+        editProfileBtn = findViewById(R.id.editProfileBtn);
         txtUsername = findViewById(R.id.txtUsername);
         editUsernameOption = findViewById(R.id.editUsernameOption);
         editPasswordOption = findViewById(R.id.editPasswordOption);
         friendsManagerOption = findViewById(R.id.friendsManagerOption);
         logoutOption = findViewById(R.id.logoutOption);
-        CardView editProfileBtn = findViewById(R.id.editProfileBtn);
+        btnConversation = findViewById(R.id.btn_conversation);
+    }
 
-        preferencesManager = new SharedPreferencesManager(this);
+    private void setupObservers() {
+        // Observe user data changes
+        viewModel.getUserData().observe(this, this::updateUI);
 
-        // Load user data
-        loadUserData();
-
-        // Set up button click listeners
-        setupClickListeners();
+        // Observe error messages
+        viewModel.getErrorMessage().observe(this, message -> {
+            Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
+            Log.e(TAG, message);
+        });
         
-        // Set up profile edit button
-        editProfileBtn.setOnClickListener(v -> {
-            Toast.makeText(SettingActivity.this, "Edit profile picture feature coming soon", Toast.LENGTH_SHORT).show();
+        // Observe loading state
+        viewModel.getIsLoading().observe(this, isLoading -> {
+            if (isLoading) {
+                showLoading("Processing...");
+            } else {
+                hideLoading();
+            }
         });
     }
 
-    private void loadUserData() {
-        DatabaseReference userRef = databaseReference.child("users").child(currentUserId);
-        userRef.addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot snapshot) {
-                if (snapshot.exists()) {
-                    // Get user data
-                    String firstName = snapshot.child("firstName").getValue(String.class);
-                    String lastName = snapshot.child("lastName").getValue(String.class);
-                    String profilePicUrl = snapshot.child("profilePicUrl").getValue(String.class);
+    private void updateUI(User user) {
+        if (user != null) {
+            // Update username
+            txtUsername.setText(user.getFullName().toUpperCase());
 
-                    // Display full name
-                    String fullName = "";
-                    if (firstName != null && lastName != null) {
-                        fullName = firstName + " " + lastName;
-                    } else if (firstName != null) {
-                        fullName = firstName;
-                    } else if (lastName != null) {
-                        fullName = lastName;
+            // Load profile image
+            if (user.getProfilePicUrl() != null && !user.getProfilePicUrl().isEmpty()) {
+                loadProfileImage(user.getProfilePicUrl());
+            } else {
+                // Load default avatar
+                viewModel.getDefaultAvatarUrl().observe(this, url -> {
+                    if (url != null && !url.isEmpty()) {
+                        loadProfileImage(url);
                     } else {
-                        fullName = "User";
+                        profileImage.setImageResource(R.drawable.background_parrot);
                     }
-                    
-                    txtUsername.setText(fullName.toUpperCase());
-
-                    // Load profile image
-                    if (profilePicUrl != null && !profilePicUrl.isEmpty()) {
-                        loadProfileImage(profilePicUrl);
-                    } else {
-                        // Load default avatar if no profile image is available
-                        loadDefaultAvatar();
-                    }
-                } else {
-                    Log.e(TAG, "User data not found in the database");
-                    txtUsername.setText("USER");
-                    loadDefaultAvatar();
-                }
+                });
             }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError error) {
-                Log.e(TAG, "Database error: " + error.getMessage());
-                txtUsername.setText("USER");
-                loadDefaultAvatar();
-            }
-        });
+        }
     }
 
     private void loadProfileImage(String imageUrl) {
         Glide.with(this)
             .load(imageUrl)
             .apply(RequestOptions.circleCropTransform())
-            .placeholder(R.drawable.background_parrot) // Using available drawable from XML
+            .placeholder(R.drawable.background_parrot)
             .error(R.drawable.background_parrot)
             .into(profileImage);
     }
 
-    private void loadDefaultAvatar() {
-        // Get default avatar URL from general_information node
-        DatabaseReference defaultAvatarRef = databaseReference.child("general_information").child("default_avatar");
-        defaultAvatarRef.addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot snapshot) {
-                String defaultAvatarUrl = snapshot.getValue(String.class);
-                if (defaultAvatarUrl != null && !defaultAvatarUrl.isEmpty()) {
-                    loadProfileImage(defaultAvatarUrl);
-                } else {
-                    // If default avatar URL is not found, use a local resource
-                    profileImage.setImageResource(R.drawable.background_parrot);
-                }
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError error) {
-                Log.e(TAG, "Database error: " + error.getMessage());
-                // Use a local resource as fallback
-                profileImage.setImageResource(R.drawable.background_parrot);
-            }
-        });
-    }
-
     private void setupClickListeners() {
-        editUsernameOption.setOnClickListener(v -> {
-            // Show username edit popup
-            showUsernameEditPopup();
-        });
+        editProfileBtn.setOnClickListener(v -> openGallery());
 
-        editPasswordOption.setOnClickListener(v -> {
-            // Show password edit popup
-            showPasswordEditPopup();
-        });
+        profileImage.setOnClickListener(v -> showProfileImagePopup());
+
+        editUsernameOption.setOnClickListener(v -> showUsernameEditPopup());
+
+        editPasswordOption.setOnClickListener(v -> showPasswordEditPopup());
 
         friendsManagerOption.setOnClickListener(v -> {
-            // Navigate to FriendsActivity
             Intent intent = new Intent(SettingActivity.this, FriendsActivity.class);
             startActivity(intent);
         });
 
-        logoutOption.setOnClickListener(v -> {
-            // Handle logout
-            FirebaseAuth.getInstance().signOut();
-            preferencesManager.setLoggedOut();
-            Toast.makeText(SettingActivity.this, "Logged out successfully", Toast.LENGTH_SHORT).show();
-            // Navigate to login screen after logout
-            Intent intent = new Intent(SettingActivity.this, SignInActivity.class);
-            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-            startActivity(intent);
-        });
+        logoutOption.setOnClickListener(v -> logout());
 
-        CardView btnConversation = findViewById(R.id.btn_conversation);
         btnConversation.setOnClickListener(v -> {
-            // Navigate back to ConversationActivity
             Intent intent = new Intent(SettingActivity.this, ConversationActivity.class);
             startActivity(intent);
         });
     }
 
+    private void openGallery() {
+        galleryLauncher.launch("image/*");
+    }
+
+    private void showProfileImagePopup() {
+        // Create popup view
+        View popupView = getLayoutInflater().inflate(R.layout.popup_profile_image, null);
+        PopupWindow popupWindow = createPopupWindow(popupView, R.dimen.popup_width);
+
+        // Get references to views
+        ImageView fullProfileImage = popupView.findViewById(R.id.fullProfileImage);
+
+        // Get the current profile image URL from the ViewModel
+        User currentUser = viewModel.getUserData().getValue();
+        String imageUrl = (currentUser != null && currentUser.getProfilePicUrl() != null) ? 
+            currentUser.getProfilePicUrl() : "";
+
+        // Load profile image into popup
+        Glide.with(this)
+            .load(imageUrl)
+            .placeholder(R.drawable.background_parrot)
+            .error(R.drawable.background_parrot)
+            .into(fullProfileImage);
+    }
+
     private void showUsernameEditPopup() {
-        // Inflate the popup layout
+        // Create popup view
         View popupView = getLayoutInflater().inflate(R.layout.popup_username, null);
+        PopupWindow popupWindow = createPopupWindow(popupView, R.dimen.popup_width);
 
-        // Create the popup window with a fixed width matching the XML layout
-        int width = (int) getResources().getDimension(R.dimen.popup_width);
-
-        int height = LinearLayout.LayoutParams.WRAP_CONTENT;
-        boolean focusable = true; // Allows taps outside the popup to dismiss it
-        final PopupWindow popupWindow = new PopupWindow(popupView, width, height, focusable);
-
-        // Set a background drawable with elevation for shadow effect
-        popupWindow.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
-        popupWindow.setElevation(10);
-
-        // Show the popup window centered in the screen
-        popupWindow.showAtLocation(findViewById(android.R.id.content), Gravity.CENTER, 0, 0);
-
-        // Dim the background
-        View rootView = getWindow().getDecorView().getRootView();
-        WindowManager.LayoutParams params = (WindowManager.LayoutParams) getWindow().getAttributes();
-        params.alpha = 0.8f;
-        getWindow().setAttributes(params);
-
-        // Restore background alpha when popup is dismissed
-        popupWindow.setOnDismissListener(() -> {
-            params.alpha = 1f;
-            getWindow().setAttributes(params);
-        });
-
-
+        // Get references to views
         EditText firstNameInput = popupView.findViewById(R.id.firstNameInput);
         EditText lastNameInput = popupView.findViewById(R.id.lastNameInput);
         AppCompatButton btnSave = popupView.findViewById(R.id.btnSave);
@@ -254,48 +245,154 @@ public class SettingActivity extends AppCompatActivity {
                 return;
             }
 
-            // Update using UserRepository
-            userRepository.updateUserProfile(currentUserId, newFirstName, newLastName)
-                    .addOnCompleteListener(task -> {
-                        if (task.isSuccessful()) {
-                            Toast.makeText(SettingActivity.this, "Name updated successfully", Toast.LENGTH_SHORT).show();
-                            txtUsername.setText((newFirstName + " " + newLastName).toUpperCase());
-                            popupWindow.dismiss();
-                        } else {
-                            Toast.makeText(SettingActivity.this, "Failed to update name", Toast.LENGTH_SHORT).show();
-                        }
-                    });
+            // Update profile using ViewModel
+            viewModel.updateUserName(newFirstName, newLastName)
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        Toast.makeText(SettingActivity.this, "Name updated successfully", Toast.LENGTH_SHORT).show();
+                        txtUsername.setText((newFirstName + " " + newLastName).toUpperCase());
+                        popupWindow.dismiss();
+                    } else {
+                        Toast.makeText(SettingActivity.this, "Failed to update name", Toast.LENGTH_SHORT).show();
+                    }
+                });
         });
 
+        // Cancel button handler
         btnCancel.setOnClickListener(v -> popupWindow.dismiss());
-
-
-        // Cancel button click handler
-        btnCancel.setOnClickListener(v -> popupWindow.dismiss());
-
     }
 
     private void showPasswordEditPopup() {
-        // Inflate the popup layout
+        // Create popup view
         View popupView = getLayoutInflater().inflate(R.layout.popup_password, null);
+        PopupWindow popupWindow = createPopupWindow(popupView, R.dimen.popup_width);
 
-        // Create the popup window with a fixed width matching the XML layout
-        int width = (int) getResources().getDimension(R.dimen.popup_width);
+        // Get references to views
+        EditText currentPasswordInput = popupView.findViewById(R.id.currentPasswordInput);
+        EditText newPasswordInput = popupView.findViewById(R.id.newPasswordInput);
+        EditText confirmPasswordInput = popupView.findViewById(R.id.confirmPasswordInput);
+        AppCompatButton btnChange = popupView.findViewById(R.id.btnChange);
+        AppCompatButton btnCancel = popupView.findViewById(R.id.btnCancel);
+        TextView forgotPasswordText = popupView.findViewById(R.id.forgotPasswordText);
 
+        // Change password button handler
+        btnChange.setOnClickListener(v -> handlePasswordChange(
+            currentPasswordInput.getText().toString().trim(),
+            newPasswordInput.getText().toString().trim(),
+            confirmPasswordInput.getText().toString().trim(),
+            btnChange,
+            popupWindow
+        ));
+
+        // Forgot password handler
+        forgotPasswordText.setOnClickListener(v -> handleForgotPassword(forgotPasswordText, popupWindow));
+
+        // Cancel button handler
+        btnCancel.setOnClickListener(v -> popupWindow.dismiss());
+    }
+
+    private void handlePasswordChange(String currentPassword, String newPassword, String confirmPassword, AppCompatButton btnChange, PopupWindow popupWindow) {
+        // Validate inputs
+        if (currentPassword.isEmpty() || newPassword.isEmpty() || confirmPassword.isEmpty()) {
+            Toast.makeText(this, "All fields are required", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        // Check if new password meets Firebase requirements
+        if (newPassword.length() < 6) {
+            Toast.makeText(this, "Password must be at least 6 characters", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        // Check if passwords match
+        if (!newPassword.equals(confirmPassword)) {
+            Toast.makeText(this, "New passwords don't match", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        // Disable button to prevent multiple clicks
+        btnChange.setEnabled(false);
+        btnChange.setText("Updating...");
+
+        // Use ViewModel to change password
+        viewModel.changePassword(currentPassword, newPassword)
+            .addOnCompleteListener(task -> {
+                // Re-enable button
+                btnChange.setEnabled(true);
+                btnChange.setText("Change");
+
+                if (task.isSuccessful()) {
+                    Toast.makeText(this, "Password updated successfully", Toast.LENGTH_SHORT).show();
+                    popupWindow.dismiss();
+                } else {
+                    // Handle different error cases
+                    String message = "Failed to update password";
+                    if (task.getException() != null) {
+                        String errorMessage = task.getException().getMessage();
+                        if (errorMessage != null && errorMessage.contains("password is invalid")) {
+                            message = "Current password is incorrect";
+                        }
+                    }
+                    Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
+                }
+            });
+    }
+
+    private void handleForgotPassword(TextView forgotPasswordText, PopupWindow popupWindow) {
+        FirebaseUser user = viewModel.getCurrentUser();
+        if (user != null) {
+            String email = user.getEmail();
+            if (email != null && !email.isEmpty()) {
+                // Disable forgot password text temporarily
+                forgotPasswordText.setEnabled(false);
+                forgotPasswordText.setText("Sending email...");
+
+                // Send password reset email
+                viewModel.sendPasswordResetEmail(email)
+                    .addOnCompleteListener(task -> {
+                        // Re-enable the text
+                        forgotPasswordText.setEnabled(true);
+                        forgotPasswordText.setText("Forgot password");
+
+                        if (task.isSuccessful()) {
+                            Toast.makeText(this,
+                                "Password reset email sent to " + email,
+                                Toast.LENGTH_SHORT).show();
+                            popupWindow.dismiss();
+                        } else {
+                            Toast.makeText(this,
+                                "Failed to send reset email",
+                                Toast.LENGTH_SHORT).show();
+                        }
+                    });
+            }
+        }
+    }
+
+    private void logout() {
+        viewModel.logout();
+        preferencesManager.setLoggedOut();
+        Toast.makeText(SettingActivity.this, "Logged out successfully", Toast.LENGTH_SHORT).show();
+        navigateToSignIn();
+    }
+
+    private PopupWindow createPopupWindow(View popupView, int widthDimensionId) {
+        // Create popup window with fixed width
+        int width = (int) getResources().getDimension(widthDimensionId);
         int height = LinearLayout.LayoutParams.WRAP_CONTENT;
         boolean focusable = true;
+
         final PopupWindow popupWindow = new PopupWindow(popupView, width, height, focusable);
 
-        // Set a background drawable with elevation
+        // Set background and elevation
         popupWindow.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
         popupWindow.setElevation(10);
 
-        // Show the popup window centered in the screen
+        // Show popup centered in screen
         popupWindow.showAtLocation(findViewById(android.R.id.content), Gravity.CENTER, 0, 0);
 
         // Dim the background
-        View rootView = getWindow().getDecorView().getRootView();
-        WindowManager.LayoutParams params = (WindowManager.LayoutParams) getWindow().getAttributes();
+        WindowManager.LayoutParams params = getWindow().getAttributes();
         params.alpha = 0.8f;
         getWindow().setAttributes(params);
 
@@ -304,100 +401,20 @@ public class SettingActivity extends AppCompatActivity {
             params.alpha = 1f;
             getWindow().setAttributes(params);
         });
-        
-        // Get references to views in the popup
-        EditText currentPasswordInput = popupView.findViewById(R.id.currentPasswordInput);
-        EditText newPasswordInput = popupView.findViewById(R.id.newPasswordInput);
-        EditText confirmPasswordInput = popupView.findViewById(R.id.confirmPasswordInput);
-        AppCompatButton btnChange = popupView.findViewById(R.id.btnChange);
-        AppCompatButton btnCancel = popupView.findViewById(R.id.btnCancel);
-        TextView forgotPasswordText = popupView.findViewById(R.id.forgotPasswordText);
-        
-        // Set up click listener for change button
-        btnChange.setOnClickListener(v -> {
-            String currentPassword = currentPasswordInput.getText().toString().trim();
-            String newPassword = newPasswordInput.getText().toString().trim();
-            String confirmPassword = confirmPasswordInput.getText().toString().trim();
-            
-            // Validate inputs
-            if (currentPassword.isEmpty() || newPassword.isEmpty() || confirmPassword.isEmpty()) {
-                Toast.makeText(SettingActivity.this, "All fields are required", Toast.LENGTH_SHORT).show();
-                return;
-            }
-            
-            // Check if new password meets Firebase requirements (min 6 characters)
-            if (newPassword.length() < 6) {
-                Toast.makeText(SettingActivity.this, "Password must be at least 6 characters", Toast.LENGTH_SHORT).show();
-                return;
-            }
-            
-            // Check if passwords match
-            if (!newPassword.equals(confirmPassword)) {
-                Toast.makeText(SettingActivity.this, "New passwords don't match", Toast.LENGTH_SHORT).show();
-                return;
-            }
-            
-            // Disable button to prevent multiple clicks
-            btnChange.setEnabled(false);
-            btnChange.setText("Updating...");
-            
-            // Use repository to change password
-            userRepository.changePassword(currentPassword, newPassword)
-                .addOnCompleteListener(task -> {
-                    // Re-enable button
-                    btnChange.setEnabled(true);
-                    btnChange.setText("Change");
-                    
-                    if (task.isSuccessful()) {
-                        Toast.makeText(SettingActivity.this, "Password updated successfully", Toast.LENGTH_SHORT).show();
-                        popupWindow.dismiss();
-                    } else {
-                        // Handle different error cases
-                        String message = "Failed to update password";
-                        if (task.getException() != null) {
-                            String errorMessage = task.getException().getMessage();
-                            if (errorMessage != null && errorMessage.contains("password is invalid")) {
-                                message = "Current password is incorrect";
-                            }
-                        }
-                        Toast.makeText(SettingActivity.this, message, Toast.LENGTH_SHORT).show();
-                    }
-                });
-        });
-        
-        // Set up click listener for forgot password link
-        forgotPasswordText.setOnClickListener(v -> {
-            FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
-            if (user != null) {
-                String email = user.getEmail();
-                if (email != null && !email.isEmpty()) {
-                    // Disable forgot password text temporarily
-                    forgotPasswordText.setEnabled(false);
-                    forgotPasswordText.setText("Sending email...");
-                    
-                    // Send password reset email
-                    userRepository.sendPasswordResetEmail(email)
-                        .addOnCompleteListener(task -> {
-                            // Re-enable the text
-                            forgotPasswordText.setEnabled(true);
-                            forgotPasswordText.setText("Forgot password");
-                            
-                            if (task.isSuccessful()) {
-                                Toast.makeText(SettingActivity.this, 
-                                    "Password reset email sent to " + email, 
-                                    Toast.LENGTH_SHORT).show();
-                                popupWindow.dismiss();
-                            } else {
-                                Toast.makeText(SettingActivity.this, 
-                                    "Failed to send reset email", 
-                                    Toast.LENGTH_SHORT).show();
-                            }
-                        });
-                }
-            }
-        });
-        
-        // Set up cancel button
-        btnCancel.setOnClickListener(v -> popupWindow.dismiss());
+
+        return popupWindow;
+    }
+
+    private void navigateToSignIn() {
+        Intent intent = new Intent(SettingActivity.this, SignInActivity.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        startActivity(intent);
+        finish();
+    }
+
+    @Override
+    protected void onDestroy() {
+        hideLoading();
+        super.onDestroy();
     }
 }
