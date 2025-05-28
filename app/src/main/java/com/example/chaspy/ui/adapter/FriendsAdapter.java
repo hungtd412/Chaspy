@@ -4,7 +4,6 @@ import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
 import android.widget.Filter;
 import android.widget.Filterable;
 import android.widget.ImageView;
@@ -43,7 +42,7 @@ public class FriendsAdapter extends RecyclerView.Adapter<FriendsAdapter.FriendVi
     @Override
     public FriendViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         View itemView = LayoutInflater.from(parent.getContext())
-                .inflate(R.layout.item_friend, parent, false);
+                .inflate(R.layout.item_friend_list, parent, false);
         return new FriendViewHolder(itemView);
     }
 

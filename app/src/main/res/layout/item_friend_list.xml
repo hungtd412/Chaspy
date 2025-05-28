@@ -4,8 +4,7 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_margin="4dp"
-    app:cardCornerRadius="8dp"
-    app:cardElevation="4dp">
+    app:cardCornerRadius="12dp">
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
@@ -25,36 +24,45 @@
             android:id="@+id/tvFriendName"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
-            android:layout_marginEnd="8dp"
+            android:layout_marginStart="16dp"
+            android:layout_marginEnd="16dp"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:text="Username"
+            android:textColor="#333333"
             android:textSize="16sp"
             android:textStyle="bold"
-            app:layout_constraintEnd_toStartOf="@id/btnRemove"
-            app:layout_constraintStart_toEndOf="@id/ivFriendProfilePic"
-            app:layout_constraintTop_toTopOf="parent" />
+            app:layout_constraintBottom_toTopOf="@+id/tvFriendEmail"
+            app:layout_constraintEnd_toStartOf="@+id/btnRemove"
+            app:layout_constraintStart_toEndOf="@+id/ivFriendProfilePic"
+            app:layout_constraintTop_toTopOf="@+id/ivFriendProfilePic" />
 
         <TextView
             android:id="@+id/tvFriendEmail"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
-            android:layout_marginEnd="8dp"
+            android:layout_marginStart="16dp"
+            android:layout_marginEnd="16dp"
+            android:text="email@example.com"
+            android:textColor="#888888"
             android:textSize="14sp"
             android:visibility="gone"
-            app:layout_constraintEnd_toStartOf="@id/btnRemove"
-            app:layout_constraintStart_toEndOf="@id/ivFriendProfilePic"
-            app:layout_constraintTop_toBottomOf="@id/tvFriendName" />
+            app:layout_constraintBottom_toTopOf="@+id/tvStatus"
+            app:layout_constraintEnd_toStartOf="@+id/btnRemove"
+            app:layout_constraintStart_toEndOf="@+id/ivFriendProfilePic"
+            app:layout_constraintTop_toBottomOf="@+id/tvFriendName" />
 
         <TextView
             android:id="@+id/tvStatus"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
-            android:layout_marginTop="4dp"
+            android:layout_marginStart="16dp"
+            android:text="Offline"
             android:textSize="12sp"
-            app:layout_constraintEnd_toStartOf="@id/btnRemove"
-            app:layout_constraintStart_toEndOf="@id/ivFriendProfilePic"
-            app:layout_constraintTop_toBottomOf="@id/tvFriendEmail" />
+            app:layout_constraintBottom_toBottomOf="@+id/ivFriendProfilePic"
+            app:layout_constraintEnd_toStartOf="@+id/btnRemove"
+            app:layout_constraintStart_toEndOf="@+id/ivFriendProfilePic"
+            app:layout_constraintTop_toBottomOf="@+id/tvFriendEmail" />
 
         <!-- Changed ID from btnChat to btnRemove -->
         <ImageView
@@ -64,7 +72,7 @@
             android:background="?attr/selectableItemBackgroundBorderless"
             android:contentDescription="Delete Friend"
             android:padding="8dp"
-            android:src="@drawable/trash"
+            android:src="@drawable/ic_trash"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent" />

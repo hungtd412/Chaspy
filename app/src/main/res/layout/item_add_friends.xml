@@ -12,7 +12,7 @@
         android:padding="8dp">
 
         <de.hdodenhof.circleimageview.CircleImageView
-            android:id="@+id/ivRequestProfilePic"
+            android:id="@+id/userImg"
             android:layout_width="50dp"
             android:layout_height="50dp"
             android:src="@drawable/default_profile_image"
@@ -21,7 +21,7 @@
             app:layout_constraintTop_toTopOf="parent" />
 
         <TextView
-            android:id="@+id/tvRequestName"
+            android:id="@+id/userName"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginStart="16dp"
@@ -32,30 +32,35 @@
             android:textColor="#333333"
             android:textSize="16sp"
             android:textStyle="bold"
-            app:layout_constraintBottom_toBottomOf="@+id/ivRequestProfilePic"
-            app:layout_constraintEnd_toStartOf="@+id/btnAccept"
-            app:layout_constraintStart_toEndOf="@+id/ivRequestProfilePic"
-            app:layout_constraintTop_toTopOf="@+id/ivRequestProfilePic" />
+            app:layout_constraintBottom_toTopOf="@+id/userStatus"
+            app:layout_constraintEnd_toStartOf="@+id/btnAddFriend"
+            app:layout_constraintStart_toEndOf="@+id/userImg"
+            app:layout_constraintTop_toTopOf="@+id/userImg" />
 
-        <ImageButton
-            android:id="@+id/btnAccept"
-            android:layout_width="36dp"
-            android:layout_height="36dp"
-            android:layout_marginEnd="8dp"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:src="@drawable/ic_accept"
-            android:contentDescription="Accept request"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toStartOf="@+id/btnReject"
-            app:layout_constraintTop_toTopOf="parent" />
+        <TextView
+            android:id="@+id/userStatus"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:layout_marginEnd="16dp"
+            android:textSize="12sp"
+            android:visibility="gone"
+            app:layout_constraintBottom_toBottomOf="@+id/userImg"
+            app:layout_constraintEnd_toStartOf="@+id/btnAddFriend"
+            app:layout_constraintStart_toEndOf="@+id/userImg"
+            app:layout_constraintTop_toBottomOf="@+id/userName" />
 
-        <ImageButton
-            android:id="@+id/btnReject"
-            android:layout_width="36dp"
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/btnAddFriend"
+            android:layout_width="wrap_content"
             android:layout_height="36dp"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:src="@drawable/ic_reject"
-            android:contentDescription="Reject request"
+            android:backgroundTint="#5D9CEC"
+            android:text="Add"
+            android:textColor="#FFFFFF"
+            android:textSize="12sp"
+            app:cornerRadius="20dp"
+            app:iconGravity="textStart"
+            app:iconTint="#FFFFFF"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent" />

@@ -17,7 +17,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.chaspy.R;
 import com.example.chaspy.data.model.FriendRequest;
 import com.example.chaspy.data.model.User;
-import com.example.chaspy.ui.adapter.UserAdapter;
+import com.example.chaspy.ui.adapter.FriendAddAdapter;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -29,14 +29,13 @@ import com.google.firebase.database.ValueEventListener;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
 
-public class AddFriendsFragment extends Fragment implements UserAdapter.OnAddFriendClickListener {
+public class AddFriendsFragment extends Fragment implements FriendAddAdapter.OnAddFriendClickListener {
 
     private RecyclerView recyclerViewAddFriends;
     private TextView emptyViewAddFriends;
     private ArrayList<User> usersList;
-    private UserAdapter userAdapter;
+    private FriendAddAdapter userAdapter;
 
     // Firebase components
     private FirebaseAuth firebaseAuth;
@@ -77,7 +76,7 @@ public class AddFriendsFragment extends Fragment implements UserAdapter.OnAddFri
 
         // Initialize users list and adapter
         usersList = new ArrayList<>();
-        userAdapter = new UserAdapter(getContext(), usersList);
+        userAdapter = new FriendAddAdapter(getContext(), usersList);
         userAdapter.setOnAddFriendClickListener(this);
 
         // Set up RecyclerView

@@ -7,7 +7,6 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
@@ -16,10 +15,11 @@ import com.example.chaspy.R;
 import com.example.chaspy.data.model.User;
 import com.squareup.picasso.Picasso;
 
+
 import java.util.ArrayList;
 import java.util.Map;
 
-public class UserAdapter extends RecyclerView.Adapter<UserAdapter.UserViewHolder> {
+public class FriendAddAdapter extends RecyclerView.Adapter<FriendAddAdapter.UserViewHolder> {
     Context mainActivity;
     ArrayList<User> usersArrayList;
     private OnAddFriendClickListener addFriendListener;
@@ -34,7 +34,7 @@ public class UserAdapter extends RecyclerView.Adapter<UserAdapter.UserViewHolder
         void onCancelFriendRequestClick(User user, int position);
     }
     
-    public UserAdapter(Context mainActivity, ArrayList<User> usersArrayList) {
+    public FriendAddAdapter(Context mainActivity, ArrayList<User> usersArrayList) {
         this.mainActivity = mainActivity;
         this.usersArrayList = usersArrayList;
     }
@@ -58,7 +58,7 @@ public class UserAdapter extends RecyclerView.Adapter<UserAdapter.UserViewHolder
     @NonNull
     @Override
     public UserViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(mainActivity).inflate(R.layout.user_item, parent, false);
+        View view = LayoutInflater.from(mainActivity).inflate(R.layout.item_add_friends, parent, false);
         return new UserViewHolder(view);
     }
 
@@ -66,20 +66,20 @@ public class UserAdapter extends RecyclerView.Adapter<UserAdapter.UserViewHolder
     public void onBindViewHolder(@NonNull UserViewHolder holder, int position) {
         User user = usersArrayList.get(position);
         holder.getUserName().setText(user.getUserName());
-        
+
         // Hide or repurpose userStatus - we don't show email anymore
         holder.getUserStatus().setVisibility(View.GONE);
-        
+
         // Load the user's profile image
         Picasso.get().load(user.getProfilePicUrl()).into(holder.getUserImg());
-        
+
         // Set button state based on friend request status
         if (sentFriendRequests != null && sentFriendRequests.containsKey(user.getUid())) {
             // Request already sent - show cancel option
             Button btnAddFriend = holder.getAddFriendButton();
             btnAddFriend.setText("Cancel");
             btnAddFriend.setEnabled(true);
-            
+
             // Set cancel request click listener
             btnAddFriend.setOnClickListener(view -> {
                 if (addFriendListener != null) {
@@ -96,7 +96,7 @@ public class UserAdapter extends RecyclerView.Adapter<UserAdapter.UserViewHolder
             Button btnAddFriend = holder.getAddFriendButton();
             btnAddFriend.setText("Add");
             btnAddFriend.setEnabled(true);
-            
+
             // Setup add friend button click
             btnAddFriend.setOnClickListener(view -> {
                 if (addFriendListener != null) {
@@ -135,7 +135,7 @@ public class UserAdapter extends RecyclerView.Adapter<UserAdapter.UserViewHolder
         public TextView getUserStatus() {
             return userStatus;
         }
-        
+
         public Button getAddFriendButton() {
             return btnAddFriend;
         }

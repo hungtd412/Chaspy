@@ -2,6 +2,7 @@ package com.example.chaspy.ui.view;
 
 import android.os.Bundle;
 import android.view.View;
+import android.widget.ImageButton;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -61,6 +62,13 @@ public class FriendsActivity extends AppCompatActivity {
         searchViewFriends = findViewById(R.id.searchViewFriends);
         tabLayoutFriends = findViewById(R.id.tabLayoutFriends);
         viewPagerFriends = findViewById(R.id.viewPagerFriends);
+
+        // Initialize back button
+        ImageButton btnBack = findViewById(R.id.btnBack);
+        btnBack.setOnClickListener(v -> {
+            // Finish this activity to return to the previous screen (settings)
+            finish();
+        });
     }
     
     private void setupTabsAndViewPager() {
