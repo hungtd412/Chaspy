@@ -46,7 +46,24 @@ public class FriendRequestsFragment extends Fragment implements FriendRequestAda
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         return inflater.inflate(R.layout.fragment_friend_requests, container, false);
     }
-    
+
+    @Override
+    public void onRequestClick(FriendRequest request, int position) {
+        // Handle clicking on a friend request
+        // For example, show a dialog with more details about the request
+        // or navigate to the sender's profile
+
+        if (getContext() != null) {
+            Toast.makeText(getContext(), "Viewing request from " + request.getSenderName(),
+                    Toast.LENGTH_SHORT).show();
+
+            // You could add additional logic here, such as:
+            // - Opening a dialog with accept/reject options
+            // - Navigating to the sender's profile
+            // - Showing more details about the request
+        }
+    }
+
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);

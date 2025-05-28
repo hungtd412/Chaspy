@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="SearchViewStyle">
+        <item name="android:editTextColor">#5D9CEC</item>
+        <item name="android:textColorHint">#5D9CEC</item>
+        <item name="colorControlNormal">#5D9CEC</item>
+        <item name="colorControlActivated">#5D9CEC</item>
+    </style>
+</resources>

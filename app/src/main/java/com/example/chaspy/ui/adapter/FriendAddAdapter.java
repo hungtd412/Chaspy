@@ -7,7 +7,6 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
@@ -19,7 +18,7 @@ import com.squareup.picasso.Picasso;
 import java.util.ArrayList;
 import java.util.Map;
 
-public class UserAdapter extends RecyclerView.Adapter<UserAdapter.UserViewHolder> {
+public class FriendAddAdapter extends RecyclerView.Adapter<FriendAddAdapter.UserViewHolder> {
     Context mainActivity;
     ArrayList<User> usersArrayList;
     private OnAddFriendClickListener addFriendListener;
@@ -34,7 +33,7 @@ public class UserAdapter extends RecyclerView.Adapter<UserAdapter.UserViewHolder
         void onCancelFriendRequestClick(User user, int position);
     }
     
-    public UserAdapter(Context mainActivity, ArrayList<User> usersArrayList) {
+    public FriendAddAdapter(Context mainActivity, ArrayList<User> usersArrayList) {
         this.mainActivity = mainActivity;
         this.usersArrayList = usersArrayList;
     }
@@ -58,7 +57,7 @@ public class UserAdapter extends RecyclerView.Adapter<UserAdapter.UserViewHolder
     @NonNull
     @Override
     public UserViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(mainActivity).inflate(R.layout.user_item, parent, false);
+        View view = LayoutInflater.from(mainActivity).inflate(R.layout.item_add_friends, parent, false);
         return new UserViewHolder(view);
     }
 
