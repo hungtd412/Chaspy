@@ -49,53 +49,67 @@ public class ConversationFirebaseService {
                         // Determine the friend's ID (the other user in the conversation)
                         final String friendId = userId.equals(user1Id) ? user2Id : user1Id;
                         
-                        // Create a conversation object with temporary empty values for friend details
-                        Conversation conversation = new Conversation(
-                                conversationId,
-                                lastMessage, 
-                                lastMessageTime,
-                                friendId,
-                                "", // Temporary empty friend username
-                                "" // Temporary empty profile pic URL
-                        );
-                        
-                        conversations.add(conversation);
-                        pendingConversationIds.add(conversationId);
-                        
-                        // Fetch the friend's details from the users node
-                        usersRef.child(friendId).addListenerForSingleValueEvent(new ValueEventListener() {
+                        // Check if they are still friends before adding the conversation
+                        checkFriendshipStatus(userId, friendId, new FriendshipStatusCallback() {
                             @Override
-                            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                                if (dataSnapshot.exists()) {
-                                    String firstName = dataSnapshot.child("firstName").getValue(String.class);
-                                    String lastName = dataSnapshot.child("lastName").getValue(String.class);
-                                    String friendUsername = firstName + " " + lastName;
-                                    String profilePicUrl = dataSnapshot.child("profilePicUrl").getValue(String.class);
+                            public void onResult(boolean areFriends) {
+                                // Only process if they are still friends
+                                if (areFriends) {
+                                    // Create a conversation object with temporary empty values for friend details
+                                    Conversation conversation = new Conversation(
+                                            conversationId,
+                                            lastMessage, 
+                                            lastMessageTime,
+                                            friendId,
+                                            "", // Temporary empty friend username
+                                            "" // Temporary empty profile pic URL
+                                    );
                                     
-                                    // Update the conversation with the friend's details
-                                    conversation.setFriendUsername(friendUsername);
-                                    conversation.setProfilePicUrl(profilePicUrl);
+                                    conversations.add(conversation);
+                                    pendingConversationIds.add(conversationId);
                                     
-                                    // Remove from pending list
-                                    pendingConversationIds.remove(conversationId);
-                                    
-                                    // If all conversations have been updated, notify callback
-                                    if (pendingConversationIds.isEmpty()) {
+                                    // Fetch the friend's details from the users node
+                                    usersRef.child(friendId).addListenerForSingleValueEvent(new ValueEventListener() {
+                                        @Override
+                                        public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                                            if (dataSnapshot.exists()) {
+                                                String firstName = dataSnapshot.child("firstName").getValue(String.class);
+                                                String lastName = dataSnapshot.child("lastName").getValue(String.class);
+                                                String friendUsername = firstName + " " + lastName;
+                                                String profilePicUrl = dataSnapshot.child("profilePicUrl").getValue(String.class);
+                                                
+                                                // Update the conversation with the friend's details
+                                                conversation.setFriendUsername(friendUsername);
+                                                conversation.setProfilePicUrl(profilePicUrl);
+                                                
+                                                // Remove from pending list
+                                                pendingConversationIds.remove(conversationId);
+                                                
+                                                // If all conversations have been updated, notify callback
+                                                if (pendingConversationIds.isEmpty()) {
+                                                    callback.onSuccess(conversations);
+                                                }
+                                            }
+                                        }
+                                        
+                                        @Override
+                                        public void onCancelled(@NonNull DatabaseError error) {
+                                            callback.onFailure(error.getMessage());
+                                        }
+                                    });
+                                } else {
+                                    // If not friends, check if this was the last pending conversation
+                                    if (pendingConversationIds.isEmpty() && conversations.isEmpty()) {
                                         callback.onSuccess(conversations);
                                     }
                                 }
-                            }
-                            
-                            @Override
-                            public void onCancelled(@NonNull DatabaseError error) {
-                                callback.onFailure(error.getMessage());
                             }
                         });
                     }
                 }
                 
-                // If no conversations found or all were immediately processed
-                if (conversations.isEmpty() || pendingConversationIds.isEmpty()) {
+                // If no conversations found
+                if (pendingConversationIds.isEmpty() && conversations.isEmpty()) {
                     callback.onSuccess(conversations);
                 }
             }
@@ -126,39 +140,49 @@ public class ConversationFirebaseService {
                     // Determine friend ID
                     String friendId = currentUserId.equals(user1Id) ? user2Id : user1Id;
                     
-                    // Create a conversation object with temporary values
-                    Conversation conversation = new Conversation(
-                            conversationId,
-                            lastMessage,
-                            lastMessageTime,
-                            friendId,
-                            "",
-                            ""
-                    );
-                    
-                    // Get friend details
-                    usersRef.child(friendId).addListenerForSingleValueEvent(new ValueEventListener() {
+                    // Check if they are still friends before proceeding
+                    checkFriendshipStatus(currentUserId, friendId, new FriendshipStatusCallback() {
                         @Override
-                        public void onDataChange(@NonNull DataSnapshot userSnapshot) {
-                            if (userSnapshot.exists()) {
-                                String firstName = userSnapshot.child("firstName").getValue(String.class);
-                                String lastName = userSnapshot.child("lastName").getValue(String.class);
-                                String friendUsername = firstName + " " + lastName;
-                                String profilePicUrl = userSnapshot.child("profilePicUrl").getValue(String.class);
+                        public void onResult(boolean areFriends) {
+                            if (areFriends) {
+                                // Create a conversation object with temporary values
+                                Conversation conversation = new Conversation(
+                                        conversationId,
+                                        lastMessage,
+                                        lastMessageTime,
+                                        friendId,
+                                        "",
+                                        ""
+                                );
                                 
-                                // Update the conversation with friend details
-                                conversation.setFriendUsername(friendUsername);
-                                conversation.setProfilePicUrl(profilePicUrl);
-                                
-                                callback.onSuccess(conversation);
+                                // Get friend details
+                                usersRef.child(friendId).addListenerForSingleValueEvent(new ValueEventListener() {
+                                    @Override
+                                    public void onDataChange(@NonNull DataSnapshot userSnapshot) {
+                                        if (userSnapshot.exists()) {
+                                            String firstName = userSnapshot.child("firstName").getValue(String.class);
+                                            String lastName = userSnapshot.child("lastName").getValue(String.class);
+                                            String friendUsername = firstName + " " + lastName;
+                                            String profilePicUrl = userSnapshot.child("profilePicUrl").getValue(String.class);
+                                            
+                                            // Update the conversation with friend details
+                                            conversation.setFriendUsername(friendUsername);
+                                            conversation.setProfilePicUrl(profilePicUrl);
+                                            
+                                            callback.onSuccess(conversation);
+                                        } else {
+                                            callback.onFailure("User not found");
+                                        }
+                                    }
+                                    
+                                    @Override
+                                    public void onCancelled(@NonNull DatabaseError error) {
+                                        callback.onFailure(error.getMessage());
+                                    }
+                                });
                             } else {
-                                callback.onFailure("User not found");
+                                callback.onFailure("Users are not friends");
                             }
-                        }
-                        
-                        @Override
-                        public void onCancelled(@NonNull DatabaseError error) {
-                            callback.onFailure(error.getMessage());
                         }
                     });
                 } else {
@@ -169,6 +193,24 @@ public class ConversationFirebaseService {
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
                 callback.onFailure(error.getMessage());
+            }
+        });
+    }
+    
+    // Helper method to check if two users are friends
+    private void checkFriendshipStatus(String userId, String friendId, FriendshipStatusCallback callback) {
+        usersRef.child(userId).child("friends").child(friendId).addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                // If the value exists and is true, they are friends
+                boolean areFriends = snapshot.exists() && Boolean.TRUE.equals(snapshot.getValue(Boolean.class));
+                callback.onResult(areFriends);
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                // Default to not friends on error
+                callback.onResult(false);
             }
         });
     }
@@ -194,5 +236,9 @@ public class ConversationFirebaseService {
     public interface SingleConversationCallback {
         void onSuccess(Conversation conversation);
         void onFailure(String error);
+    }
+    
+    public interface FriendshipStatusCallback {
+        void onResult(boolean areFriends);
     }
 }
