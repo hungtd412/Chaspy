@@ -3,6 +3,13 @@ plugins {
     alias(libs.plugins.google.gms.google.services)
 }
 
+// Load the properties file if it exists
+def localPropertiesFile = rootProject.file("local.properties")
+def localProperties = new Properties()
+if (localPropertiesFile.exists()) {
+    localProperties.load(new FileInputStream(localPropertiesFile))
+}
+
 android {
     namespace 'com.example.chaspy'
     compileSdk 35
@@ -15,6 +22,14 @@ android {
         versionName "1.0"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        
+        // Define Cloudinary credentials from local.properties with proper fallbacks
+        buildConfigField "String", "CLOUDINARY_CLOUD_NAME", localProperties.getProperty('cloudinary.cloud_name') ? 
+            "\"${localProperties.getProperty('cloudinary.cloud_name')}\"" : "\"\""
+        buildConfigField "String", "CLOUDINARY_API_KEY", localProperties.getProperty('cloudinary.api_key') ? 
+            "\"${localProperties.getProperty('cloudinary.api_key')}\"" : "\"\""
+        buildConfigField "String", "CLOUDINARY_API_SECRET", localProperties.getProperty('cloudinary.api_secret') ? 
+            "\"${localProperties.getProperty('cloudinary.api_secret')}\"" : "\"\""
     }
 
     buildTypes {
@@ -26,6 +41,10 @@ android {
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_11
         targetCompatibility JavaVersion.VERSION_11
+    }
+    
+    buildFeatures {
+        buildConfig true
     }
 }
 
@@ -50,5 +69,8 @@ dependencies {
     androidTestImplementation libs.ext.junit
     androidTestImplementation libs.espresso.core
     implementation libs.gson
-}
 
+    // Cloudinary dependencies
+    implementation 'com.cloudinary:cloudinary-android:2.3.1'
+    implementation 'com.cloudinary:cloudinary-core:1.34.0'
+}
