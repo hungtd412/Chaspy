@@ -194,5 +194,47 @@ public class UserFirebaseService {
         
         return taskCompletionSource.getTask();
     }
-}
 
+    /**
+     * Update user's profile picture URL in Firebase Database
+     * @param userId User ID whose profile picture needs to be updated
+     * @param newProfilePicUrl URL of the new profile picture
+     * @return Task representing the result of the update operation
+     */
+    public Task<Void> updateProfilePicture(String userId, String newProfilePicUrl) {
+        // Create a map with just the field to update
+        Map<String, Object> updates = new HashMap<>();
+        updates.put("profilePicUrl", newProfilePicUrl);
+        
+        // Update the field
+        return usersRef.child(userId).updateChildren(updates);
+    }
+
+    /**
+     * Get the current user's profile picture URL
+     * @param userId User ID to get profile picture for
+     * @return Task that resolves with the profile picture URL
+     */
+    public Task<String> getCurrentProfilePicUrl(String userId) {
+        TaskCompletionSource<String> taskCompletionSource = new TaskCompletionSource<>();
+        
+        usersRef.child(userId).child("profilePicUrl").get().addOnCompleteListener(task -> {
+            if (task.isSuccessful() && task.getResult() != null) {
+                String url = task.getResult().getValue(String.class);
+                taskCompletionSource.setResult(url != null ? url : "");
+            } else {
+                taskCompletionSource.setResult("");
+            }
+        });
+        
+        return taskCompletionSource.getTask();
+    }
+
+    public boolean isDefaultProfilePicture(String profilePicUrl) {
+        return profilePicUrl != null && profilePicUrl.equals(defaultAvatarUrl);
+    }
+
+    public boolean containsDefaultProfileString(String url) {
+        return url != null && url.contains("default_profile_d340av");
+    }
+}
