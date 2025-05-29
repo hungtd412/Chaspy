@@ -52,7 +52,7 @@
 
         <!-- Location option -->
         <androidx.constraintlayout.widget.ConstraintLayout
-            android:id="@+id/timeLayout"
+            android:id="@+id/sendLaterButtonLayout"
             android:layout_width="match_parent"
             android:layout_height="56dp"
             android:background="?android:attr/selectableItemBackground"
