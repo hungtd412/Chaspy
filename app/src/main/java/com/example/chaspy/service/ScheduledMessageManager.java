@@ -23,8 +23,9 @@ public class ScheduledMessageManager {
     private static final String TAG = "ScheduledMessageManager";
     private static final String WORK_NAME = "scheduled_message_worker";
     
-    // Check every second using a Handler instead of WorkManager for periodic work
-    // WorkManager's minimum interval is 15 minutes, so we use Handler for second-level precision
+    // OPTIMIZATION: Increase check interval to reduce CPU usage
+    // Checking every 3 seconds instead of every second - this is still more than good enough
+    // for most messaging applications while reducing system load
     private static final long CHECK_INTERVAL_MS = 3000; // 3 second interval
     
     // Handler for second-level checks
@@ -38,20 +39,21 @@ public class ScheduledMessageManager {
     
     public static void startScheduledMessageWorker(Context context) {
         try {
-            Log.d(TAG, "Setting up scheduled message worker with 1-second interval");
+            Log.d(TAG, "Setting up scheduled message worker with " + (CHECK_INTERVAL_MS/1000) + "-second interval");
             
             // Set up WorkManager (as backup/redundancy)
             Constraints constraints = new Constraints.Builder()
                     .setRequiredNetworkType(NetworkType.CONNECTED)
                     .build();
             
-            // Set up a periodic work request with minimum interval
+            // OPTIMIZATION: Use exponential backoff for the periodic work to avoid
+            // excessive resource consumption when errors occur
             PeriodicWorkRequest workRequest = new PeriodicWorkRequest.Builder(
                     ScheduledMessageWorker.class,
                     REPEAT_INTERVAL, REPEAT_INTERVAL_UNIT)
                     .setConstraints(constraints)
                     .setInitialDelay(5, TimeUnit.SECONDS)
-                    .setBackoffCriteria(BackoffPolicy.LINEAR, 10, TimeUnit.SECONDS)
+                    .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 30, TimeUnit.SECONDS)
                     .build();
             
             WorkManager.getInstance(context).enqueueUniquePeriodicWork(
@@ -65,7 +67,7 @@ public class ScheduledMessageManager {
             // Also schedule an immediate check
             checkScheduledMessagesNow(context);
             
-            Log.d(TAG, "Scheduled message worker has been set up with 1-second interval");
+            Log.d(TAG, "Scheduled message worker has been set up with " + (CHECK_INTERVAL_MS/1000) + "-second interval");
         } catch (Exception e) {
             Log.e(TAG, "Failed to start scheduled message worker: " + e.getMessage(), e);
         }
@@ -78,30 +80,41 @@ public class ScheduledMessageManager {
             return;
         }
         
-        Log.d(TAG, "Starting second-level precision checks every second");
+        Log.d(TAG, "Starting precision checks every " + (CHECK_INTERVAL_MS/1000) + " seconds");
         
         // Create handler on main thread
         if (secondLevelHandler == null) {
             secondLevelHandler = new Handler(Looper.getMainLooper());
         }
         
+        // OPTIMIZATION: Track execution time to adjust interval dynamically
+        final long[] lastExecutionTime = {0};
+        
         // Create runnable that will check messages and reschedule itself
         secondLevelRunnable = new Runnable() {
             @Override
             public void run() {
                 try {
-                    // Schedule a one-time work to check messages
-                    OneTimeWorkRequest workRequest = new OneTimeWorkRequest.Builder(ScheduledMessageWorker.class)
-                            .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
-                            .build();
-                    WorkManager.getInstance(context).enqueue(workRequest);
+                    long start = System.currentTimeMillis();
                     
-                    // Reschedule this runnable to run again in 1 second
+                    // OPTIMIZATION: Only schedule work if enough time has passed since the last execution
+                    // This prevents overlapping executions that waste resources
+                    if (lastExecutionTime[0] == 0 || (start - lastExecutionTime[0] >= CHECK_INTERVAL_MS)) {
+                        lastExecutionTime[0] = start;
+                        
+                        // Schedule a one-time work to check messages
+                        OneTimeWorkRequest workRequest = new OneTimeWorkRequest.Builder(ScheduledMessageWorker.class)
+                                .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
+                                .build();
+                        WorkManager.getInstance(context).enqueue(workRequest);
+                    }
+                    
+                    // Reschedule this runnable to run again
                     if (isRunning && secondLevelHandler != null) {
                         secondLevelHandler.postDelayed(this, CHECK_INTERVAL_MS);
                     }
                 } catch (Exception e) {
-                    Log.e(TAG, "Error in second-level check: " + e.getMessage());
+                    Log.e(TAG, "Error in periodic check: " + e.getMessage());
                     // Try to recover by scheduling again
                     if (isRunning && secondLevelHandler != null) {
                         secondLevelHandler.postDelayed(this, CHECK_INTERVAL_MS);

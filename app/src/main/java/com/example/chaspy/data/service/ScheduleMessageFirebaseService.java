@@ -9,6 +9,7 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+import com.google.firebase.database.Query;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -83,7 +84,7 @@ public class ScheduleMessageFirebaseService {
 
     /**
      * Get pending messages that need to be sent (sending_time <= currentTime)
-     * Enhanced with better logging and time comparison
+     * OPTIMIZED with indexed query to reduce data transfer and processing time
      */
     public void getPendingScheduledMessages(long currentTime, ScheduleCallback<List<ScheduleMessage>> callback) {
         // Format current time for logging
@@ -92,13 +93,23 @@ public class ScheduleMessageFirebaseService {
         
         Log.d(TAG, "Checking for pending messages at current time: " + formattedCurrentTime);
         
-        scheduleMessagesRef.addListenerForSingleValueEvent(new ValueEventListener() {
+        // OPTIMIZATION: Using query to filter data server-side instead of client-side
+        // This greatly reduces data transfer and processing time
+        String currentTimeStr = String.valueOf(currentTime);
+        
+        // Query messages where sending_time is less than or equal to current time
+        // Note: string comparison works because Firebase stores timestamps as strings
+        // and lexicographical string comparison matches numeric order for same-length numbers
+        Query pendingMessagesQuery = scheduleMessagesRef.orderByChild("sending_time")
+                                                        .endAt(currentTimeStr);
+                                                        
+        pendingMessagesQuery.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                 List<ScheduleMessage> pendingMessages = new ArrayList<>();
                 int totalMessages = 0;
-                int skippedFutureMessages = 0;
-                int skippedInvalidMessages = 0;
+                int validMessages = 0;
+                int invalidMessages = 0;
 
                 for (DataSnapshot messageSnapshot : dataSnapshot.getChildren()) {
                     totalMessages++;
@@ -109,52 +120,27 @@ public class ScheduleMessageFirebaseService {
                     String timeStr = messageSnapshot.child("sending_time").getValue(String.class);
                     String conversationId = messageSnapshot.child("conversation_id").getValue(String.class);
                     
-                    Log.d(TAG, "Processing message ID: " + messageId +
-                          ", Sender: " + senderId +
-                          ", Receiver: " + receiverId +
-                          ", Content: " + content +
-                          ", Scheduled Time: " + timeStr +
-                          ", Conversation: " + conversationId);
-                    
                     if (messageId == null || senderId == null || receiverId == null || content == null || timeStr == null) {
-                        Log.w(TAG, "Skipping invalid message with missing fields, ID: " + 
-                              (messageId != null ? messageId : "unknown"));
-                        skippedInvalidMessages++;
+                        invalidMessages++;
                         continue;
                     }
                     
                     try {
                         // Parse string timestamp to long
                         long scheduledTime = Long.parseLong(timeStr);
-                        String formattedScheduledTime = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS", Locale.getDefault())
-                                .format(new Date(scheduledTime));
                         
-                        // Enhanced logging for each message
-                        Log.d(TAG, String.format("Message ID: %s, Scheduled: %s, Current: %s, Difference: %d sec, Conversation: %s", 
-                                messageId, formattedScheduledTime, formattedCurrentTime, 
-                                (currentTime - scheduledTime) / 1000, conversationId));
-                        
-                        // Check if it's time to send (use <= to ensure we don't miss any messages)
-                        if (scheduledTime <= currentTime) {
-                            ScheduleMessage message = new ScheduleMessage(
-                                    messageId, senderId, receiverId, content, scheduledTime, conversationId);
-                            pendingMessages.add(message);
-                            
-                            Log.d(TAG, "✅ READY TO SEND: Message " + messageId + 
-                                  " scheduled for " + formattedScheduledTime);
-                        } else {
-                            skippedFutureMessages++;
-                            Log.d(TAG, "⏳ Future message: " + messageId + 
-                                  " scheduled for " + formattedScheduledTime);
-                        }
+                        // Add the message to the list of pending messages
+                        ScheduleMessage message = new ScheduleMessage(
+                                messageId, senderId, receiverId, content, scheduledTime, conversationId);
+                        pendingMessages.add(message);
+                        validMessages++;
                     } catch (NumberFormatException e) {
-                        Log.e(TAG, "Invalid timestamp format for message ID " + messageId + ": " + timeStr, e);
-                        skippedInvalidMessages++;
+                        invalidMessages++;
                     }
                 }
 
-                Log.d(TAG, String.format("Summary: %d total messages, %d pending to send, %d future, %d invalid", 
-                      totalMessages, pendingMessages.size(), skippedFutureMessages, skippedInvalidMessages));
+                Log.d(TAG, String.format("[PERFORMANCE] Query returned %d total messages, %d valid pending, %d invalid", 
+                        totalMessages, validMessages, invalidMessages));
                 
                 callback.onSuccess(pendingMessages);
             }
@@ -168,7 +154,7 @@ public class ScheduleMessageFirebaseService {
 
     /**
      * Delete a scheduled message from Firebase
-     * Enhanced with more detailed error handling and logging
+     * Optimized for performance
      */
     public void deleteScheduledMessage(String messageId, ScheduleCallback<Void> callback) {
         if (messageId == null || messageId.isEmpty()) {
@@ -177,40 +163,19 @@ public class ScheduleMessageFirebaseService {
             return;
         }
 
-        Log.d(TAG, "Attempting to delete scheduled message: " + messageId);
-
-        // Verify message exists before attempting deletion
-        scheduleMessagesRef.child(messageId).addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                if (!dataSnapshot.exists()) {
-                    Log.w(TAG, "Message " + messageId + " does not exist or was already deleted");
-                    // Consider this a success since the message is already not in the database
+        // Directly delete without checking if it exists first to save a network call
+        scheduleMessagesRef.child(messageId).removeValue()
+                .addOnSuccessListener(aVoid -> {
+                    Log.d(TAG, "Deleted scheduled message: " + messageId);
                     callback.onSuccess(null);
-                    return;
-                }
-
-                // Message exists, proceed with deletion
-                scheduleMessagesRef.child(messageId).removeValue()
-                        .addOnSuccessListener(aVoid -> {
-                            Log.d(TAG, "Successfully deleted scheduled message: " + messageId);
-                            callback.onSuccess(null);
-                        })
-                        .addOnFailureListener(new OnFailureListener() {
-                            @Override
-                            public void onFailure(@NonNull Exception e) {
-                                Log.e(TAG, "Failed to delete message " + messageId + ": " + e.getMessage(), e);
-                                callback.onError("Failed to delete message: " + e.getMessage());
-                            }
-                        });
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError databaseError) {
-                Log.e(TAG, "Error checking message " + messageId + ": " + databaseError.getMessage());
-                callback.onError("Failed to access message: " + databaseError.getMessage());
-            }
-        });
+                })
+                .addOnFailureListener(new OnFailureListener() {
+                    @Override
+                    public void onFailure(@NonNull Exception e) {
+                        Log.e(TAG, "Failed to delete message " + messageId + ": " + e.getMessage(), e);
+                        callback.onError("Failed to delete message: " + e.getMessage());
+                    }
+                });
     }
 
     /**
