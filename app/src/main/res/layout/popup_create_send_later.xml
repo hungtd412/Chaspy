@@ -38,54 +38,120 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
-    <EditText
-        android:id="@+id/etHour"
-        android:layout_width="0dp"
-        android:layout_height="48dp"
+    <!-- Time input section -->
+    <LinearLayout
+        android:id="@+id/timeInputLayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
         android:layout_marginTop="20dp"
-        android:layout_marginEnd="8dp"
-        android:background="@drawable/rounded_edit_text_background"
-        android:gravity="center"
-        android:hint="Hour"
-        android:inputType="number"
-        android:maxLength="2"
-        android:textColorHint="#9E9E9E"
-        android:textSize="14sp"
-        app:layout_constraintEnd_toStartOf="@id/etMinute"
-        app:layout_constraintHorizontal_weight="1"
+        android:orientation="horizontal"
+        app:layout_constraintTop_toBottomOf="@id/etMessage"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/etMessage" />
+        app:layout_constraintEnd_toEndOf="parent">
 
-    <EditText
-        android:id="@+id/etMinute"
-        android:layout_width="0dp"
-        android:layout_height="48dp"
-        android:layout_marginHorizontal="8dp"
-        android:background="@drawable/rounded_edit_text_background"
-        android:gravity="center"
-        android:hint="Minute"
-        android:inputType="number"
-        android:maxLength="2"
-        android:textColorHint="#9E9E9E"
-        android:textSize="14sp"
-        app:layout_constraintEnd_toStartOf="@id/btnCalendar"
-        app:layout_constraintHorizontal_weight="1"
-        app:layout_constraintStart_toEndOf="@id/etHour"
-        app:layout_constraintTop_toTopOf="@id/etHour" />
+        <!-- Hour input with up/down buttons -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="0.8"
+            android:orientation="vertical"
+            android:layout_marginEnd="4dp">
 
-    <ImageButton
-        android:id="@+id/btnCalendar"
-        android:layout_width="48dp"
-        android:layout_height="48dp"
-        android:layout_marginStart="8dp"
-        android:background="@drawable/rounded_edit_text_background"
-        android:contentDescription="Select date"
-        android:padding="12dp"
-        android:src="@drawable/ic_calendar"
-        app:tint="#757575"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toEndOf="@id/etMinute"
-        app:layout_constraintTop_toTopOf="@id/etHour" />
+            <ImageButton
+                android:id="@+id/btnIncreaseHour"
+                android:layout_width="match_parent"
+                android:layout_height="24dp"
+                android:background="@drawable/rounded_edit_text_background"
+                android:src="@drawable/ic_up"
+                android:contentDescription="Increase hour"
+                app:tint="#4D97FF" />
+
+            <EditText
+                android:id="@+id/etHour"
+                android:layout_width="match_parent"
+                android:layout_height="38dp"
+                android:background="@drawable/rounded_edit_text_background"
+                android:gravity="center"
+                android:hint="Hour"
+                android:inputType="number"
+                android:maxLength="2"
+                android:textColorHint="#9E9E9E"
+                android:textSize="14sp" />
+
+            <ImageButton
+                android:id="@+id/btnDecreaseHour"
+                android:layout_width="match_parent"
+                android:layout_height="24dp"
+                android:background="@drawable/rounded_edit_text_background"
+                android:src="@drawable/ic_down"
+                android:contentDescription="Decrease hour"
+                app:tint="#4D97FF" />
+        </LinearLayout>
+
+        <!-- Minute input with up/down buttons -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="0.8"
+            android:orientation="vertical"
+            android:layout_marginHorizontal="4dp">
+
+            <ImageButton
+                android:id="@+id/btnIncreaseMinute"
+                android:layout_width="match_parent"
+                android:layout_height="24dp"
+                android:background="@drawable/rounded_edit_text_background"
+                android:src="@drawable/ic_up"
+                android:contentDescription="Increase minute"
+                app:tint="#4D97FF" />
+
+            <EditText
+                android:id="@+id/etMinute"
+                android:layout_width="match_parent"
+                android:layout_height="38dp"
+                android:background="@drawable/rounded_edit_text_background"
+                android:gravity="center"
+                android:hint="Min"
+                android:inputType="number"
+                android:maxLength="2"
+                android:textColorHint="#9E9E9E"
+                android:textSize="14sp" />
+
+            <ImageButton
+                android:id="@+id/btnDecreaseMinute"
+                android:layout_width="match_parent"
+                android:layout_height="24dp"
+                android:background="@drawable/rounded_edit_text_background"
+                android:src="@drawable/ic_down"
+                android:contentDescription="Decrease minute"
+                app:tint="#4D97FF" />
+        </LinearLayout>
+
+        <!-- AM/PM Spinner -->
+        <Spinner
+            android:id="@+id/spinnerAmPm"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="0.8"
+            android:layout_marginHorizontal="4dp"
+            android:background="@drawable/rounded_edit_text_background"
+            android:gravity="center"
+            android:entries="@array/ampm_array"
+            android:textAlignment="center" />
+
+        <!-- Calendar button -->
+        <ImageButton
+            android:id="@+id/btnCalendar"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="0.8"
+            android:layout_marginStart="4dp"
+            android:background="@drawable/rounded_edit_text_background"
+            android:contentDescription="Select date"
+            android:padding="12dp"
+            android:src="@drawable/ic_calendar"
+            app:tint="#4D97FF" />
+    </LinearLayout>
 
     <TextView
         android:id="@+id/tvTimeResult"
@@ -98,7 +164,7 @@
         android:textAlignment="center"
         app:layout_constraintEnd_toStartOf="@+id/tvDateResult"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/etHour"
+        app:layout_constraintTop_toBottomOf="@id/timeInputLayout"
         app:layout_constraintHorizontal_weight="1" />
 
     <TextView
@@ -112,7 +178,7 @@
         android:textAlignment="center"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toEndOf="@+id/tvTimeResult"
-        app:layout_constraintTop_toBottomOf="@id/etHour"
+        app:layout_constraintTop_toBottomOf="@id/timeInputLayout"
         app:layout_constraintHorizontal_weight="1" />
 
     <LinearLayout

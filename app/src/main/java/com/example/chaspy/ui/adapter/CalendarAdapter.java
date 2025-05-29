@@ -46,6 +46,29 @@ public class CalendarAdapter extends BaseAdapter {
         return position;
     }
 
+    public int getTodayPosition() {
+        Calendar today = Calendar.getInstance();
+        today.set(Calendar.HOUR_OF_DAY, 0);
+        today.set(Calendar.MINUTE, 0);
+        today.set(Calendar.SECOND, 0);
+        today.set(Calendar.MILLISECOND, 0);
+
+        for (int i = 0; i < getCount(); i++) {
+            Date date = (Date) getItem(i);
+            Calendar cal = Calendar.getInstance();
+            cal.setTime(date);
+            cal.set(Calendar.HOUR_OF_DAY, 0);
+            cal.set(Calendar.MINUTE, 0);
+            cal.set(Calendar.SECOND, 0);
+            cal.set(Calendar.MILLISECOND, 0);
+
+            if (cal.equals(today) &&
+                    cal.get(Calendar.MONTH) == currentCalendar.get(Calendar.MONTH)) {
+                return i;
+            }
+        }
+        return -1;
+    }
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
         if (convertView == null) {

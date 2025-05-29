@@ -17,6 +17,11 @@ import android.widget.TextView;
 import android.widget.Toast;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
+import android.text.Editable;
+import android.text.TextWatcher;
+import android.widget.AdapterView;
+import android.widget.Spinner;
+import java.util.Locale;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
@@ -527,6 +532,7 @@ public class ChatActivity extends AppCompatActivity {
             }
         }
     }
+
     private void addSendLaterItem() {
         // Before showing the new popup, make sure to dismiss the first one
         if (sendLaterPopupWindow != null && sendLaterPopupWindow.isShowing()) {
@@ -539,14 +545,183 @@ public class ChatActivity extends AppCompatActivity {
         // Create popup window using the helper method
         createSendLaterPopupWindow = createPopupWindow(popupCreateSendLater, R.dimen.popup_width);
 
-        // Get references to views in the popup
+        // Get references to time-related views
         EditText etMessage = popupCreateSendLater.findViewById(R.id.etMessage);
         EditText etHour = popupCreateSendLater.findViewById(R.id.etHour);
         EditText etMinute = popupCreateSendLater.findViewById(R.id.etMinute);
-        TextView tvTimeResult = popupCreateSendLater.findViewById(R.id.tvDateResult);
+        ImageButton btnIncreaseHour = popupCreateSendLater.findViewById(R.id.btnIncreaseHour);
+        ImageButton btnDecreaseHour = popupCreateSendLater.findViewById(R.id.btnDecreaseHour);
+        ImageButton btnIncreaseMinute = popupCreateSendLater.findViewById(R.id.btnIncreaseMinute);
+        ImageButton btnDecreaseMinute = popupCreateSendLater.findViewById(R.id.btnDecreaseMinute);
+        TextView tvTimeResult = popupCreateSendLater.findViewById(R.id.tvTimeResult);
+        TextView tvDateResult = popupCreateSendLater.findViewById(R.id.tvDateResult);
+        Spinner spinnerAmPm = popupCreateSendLater.findViewById(R.id.spinnerAmPm);
         ImageButton btnCalendar = popupCreateSendLater.findViewById(R.id.btnCalendar);
         AppCompatButton btnCreate = popupCreateSendLater.findViewById(R.id.btnCreate);
         AppCompatButton btnCancel = popupCreateSendLater.findViewById(R.id.btnCancel);
+
+        // Initialize with current time
+        Calendar calendar = Calendar.getInstance();
+        int currentHour = calendar.get(Calendar.HOUR);
+        if (currentHour == 0) currentHour = 12; // Convert 0 to 12 for 12-hour format
+        int currentMinute = calendar.get(Calendar.MINUTE);
+        int amPm = calendar.get(Calendar.AM_PM);
+
+        // Set initial values
+        etHour.setText(String.valueOf(currentHour));
+        etMinute.setText(String.format(Locale.getDefault(), "%02d", currentMinute));
+        spinnerAmPm.setSelection(amPm); // 0 for AM, 1 for PM
+
+        // Update time result display
+        updateTimeDisplay(tvTimeResult, etHour, etMinute, spinnerAmPm);
+
+        // Set click listeners for hour buttons
+        btnIncreaseHour.setOnClickListener(v -> {
+            int hour = parseIntSafely(etHour.getText().toString(), 12);
+            hour = (hour % 12) + 1; // Cycle from 1 to 12
+            etHour.setText(String.valueOf(hour));
+            updateTimeDisplay(tvTimeResult, etHour, etMinute, spinnerAmPm);
+        });
+
+        btnDecreaseHour.setOnClickListener(v -> {
+            int hour = parseIntSafely(etHour.getText().toString(), 12);
+            hour = (hour - 2 + 12) % 12 + 1; // Cycle from 12 to 1
+            etHour.setText(String.valueOf(hour));
+            updateTimeDisplay(tvTimeResult, etHour, etMinute, spinnerAmPm);
+        });
+
+        // Set click listeners for minute buttons
+        btnIncreaseMinute.setOnClickListener(v -> {
+            int minute = parseIntSafely(etMinute.getText().toString(), 0);
+            minute = (minute + 1) % 60;
+            etMinute.setText(String.format(Locale.getDefault(), "%02d", minute));
+            updateTimeDisplay(tvTimeResult, etHour, etMinute, spinnerAmPm);
+        });
+
+        btnDecreaseMinute.setOnClickListener(v -> {
+            int minute = parseIntSafely(etMinute.getText().toString(), 0);
+            minute = (minute - 1 + 60) % 60;
+            etMinute.setText(String.format(Locale.getDefault(), "%02d", minute));
+            updateTimeDisplay(tvTimeResult, etHour, etMinute, spinnerAmPm);
+        });
+
+        // Set listener for AM/PM spinner
+        spinnerAmPm.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                updateTimeDisplay(tvTimeResult, etHour, etMinute, spinnerAmPm);
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+                // Do nothing
+            }
+        });
+
+        // Add text change listeners to update time display and validate input
+        etHour.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {}
+
+            @Override
+            public void afterTextChanged(Editable s) {
+                if (s.length() > 0) {
+                    int hour = parseIntSafely(s.toString(), 12);
+                    if (hour < 1) hour = 1;
+                    if (hour > 12) hour = 12;
+                    if (Integer.parseInt(s.toString()) != hour) {
+                        etHour.setText(String.valueOf(hour));
+                        etHour.setSelection(etHour.getText().length());
+                    }
+                }
+                updateTimeDisplay(tvTimeResult, etHour, etMinute, spinnerAmPm);
+            }
+        });
+
+        // For the minute input field
+        etMinute.addTextChangedListener(new TextWatcher() {
+            private boolean isUpdating = false;
+
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {}
+
+            @Override
+            public void afterTextChanged(Editable s) {
+                if (isUpdating) return;
+
+                isUpdating = true;
+
+                String text = s.toString();
+                if (text.isEmpty()) {
+                    // When empty, don't auto-format yet to allow typing
+                    isUpdating = false;
+                    return;
+                }
+
+                try {
+                    // Parse the input as integer
+                    int minute = Integer.parseInt(text);
+
+                    // Handle valid range
+                    if (minute > 59) {
+                        etMinute.setText("59");
+                        etMinute.setSelection(2); // Place cursor at end
+                    } else if (text.length() == 2) {
+                        // Already has 2 digits, no formatting needed
+                        // Just ensure it's within range
+                        if (minute < 0) {
+                            etMinute.setText("00");
+                            etMinute.setSelection(2);
+                        }
+                    } else if (text.length() == 1) {
+                        // Single digit - keep as is while editing
+                        if (minute < 0) {
+                            etMinute.setText("0");
+                            etMinute.setSelection(1);
+                        }
+                    }
+                } catch (NumberFormatException e) {
+                    // If not a valid number, reset to 00
+                    etMinute.setText("00");
+                    etMinute.setSelection(2);
+                }
+
+                updateTimeDisplay(tvTimeResult, etHour, etMinute, spinnerAmPm);
+                isUpdating = false;
+            }
+        });
+
+// Add focus listener to format minutes properly when focus changes
+        etMinute.setOnFocusChangeListener((v, hasFocus) -> {
+            if (!hasFocus) {
+                // When losing focus, ensure proper format with leading zeros
+                String text = etMinute.getText().toString();
+                if (text.isEmpty()) {
+                    etMinute.setText("00");
+                } else {
+                    try {
+                        int minute = Integer.parseInt(text);
+                        if (minute < 10) {
+                            etMinute.setText(String.format(Locale.getDefault(), "%02d", minute));
+                        }
+                    } catch (NumberFormatException e) {
+                        etMinute.setText("00");
+                    }
+                }
+                updateTimeDisplay(tvTimeResult, etHour, etMinute, spinnerAmPm);
+            }
+        });
+
+        // Set up calendar button
+        btnCalendar.setOnClickListener(v -> {
+            showCalendarDialog();
+        });
 
         // Set click listener for cancel button
         btnCancel.setOnClickListener(v -> {
@@ -560,24 +735,88 @@ public class ChatActivity extends AppCompatActivity {
             String message = etMessage.getText().toString().trim();
             String hour = etHour.getText().toString().trim();
             String minute = etMinute.getText().toString().trim();
+            String timeStr = tvTimeResult.getText().toString().trim();
+            String dateStr = tvDateResult.getText().toString().trim();
 
-            if (message.isEmpty() || hour.isEmpty() || minute.isEmpty()) {
-                Toast.makeText(ChatActivity.this, "Please fill in all fields", Toast.LENGTH_SHORT).show();
+            if (message.isEmpty()) {
+                Toast.makeText(ChatActivity.this, "Please enter a message", Toast.LENGTH_SHORT).show();
                 return;
             }
 
-            // TODO: Add logic to schedule the message
-            Toast.makeText(ChatActivity.this, "Message scheduled", Toast.LENGTH_SHORT).show();
-            createSendLaterPopupWindow.dismiss();
-            // Show the send later popup again
-            showSendLaterPopup();
-        });
+            if (hour.isEmpty() || minute.isEmpty() || "Time here".equals(timeStr)) {
+                Toast.makeText(ChatActivity.this, "Please set a valid time", Toast.LENGTH_SHORT).show();
+                return;
+            }
 
-        // Set up calendar button
-        // Set up calendar button
-        btnCalendar.setOnClickListener(v -> {
-            showCalendarDialog();
+            if ("Date here".equals(dateStr)) {
+                Toast.makeText(ChatActivity.this, "Please select a date", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            // Check if the selected date and time are in the past
+            try {
+                // Parse the date
+                SimpleDateFormat dateFormat = new SimpleDateFormat("EEE, d MMM yyyy", Locale.getDefault());
+                Date selectedDate = dateFormat.parse(dateStr);
+
+                // Parse the time
+                int hourValue = Integer.parseInt(hour);
+                int minuteValue = Integer.parseInt(minute);
+                boolean isPM = spinnerAmPm.getSelectedItem().toString().equals("PM");
+
+                // Create calendar with selected date and time
+                Calendar scheduledTime = Calendar.getInstance();
+                scheduledTime.setTime(selectedDate);
+                scheduledTime.set(Calendar.HOUR, hourValue);
+                scheduledTime.set(Calendar.MINUTE, minuteValue);
+                scheduledTime.set(Calendar.SECOND, 0);
+                scheduledTime.set(Calendar.MILLISECOND, 0);
+                scheduledTime.set(Calendar.AM_PM, isPM ? Calendar.PM : Calendar.AM);
+
+                // Compare with current time
+                Calendar now = Calendar.getInstance();
+                if (scheduledTime.before(now)) {
+                    Toast.makeText(ChatActivity.this, "Cannot schedule messages in the past", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
+                // Get timestamp (milliseconds since epoch)
+                long scheduledTimestamp = scheduledTime.getTimeInMillis();
+
+
+                Toast.makeText(ChatActivity.this,
+                        "Message scheduled for timestamp: " + scheduledTimestamp,
+                        Toast.LENGTH_SHORT).show();
+
+                createSendLaterPopupWindow.dismiss();
+                // Show the send later popup again
+                showSendLaterPopup();
+
+            } catch (Exception e) {
+                Toast.makeText(ChatActivity.this, "Invalid date or time format", Toast.LENGTH_SHORT).show();
+                e.printStackTrace();
+            }
         });
+    }
+
+    private void updateTimeDisplay(TextView tvTimeResult, EditText etHour, EditText etMinute, android.widget.Spinner spinnerAmPm) {
+        String hour = etHour.getText().toString();
+        String minute = etMinute.getText().toString();
+        String amPm = spinnerAmPm.getSelectedItem().toString();
+
+        if (hour.isEmpty()) hour = "12";
+        if (minute.isEmpty()) minute = "00";
+
+        String timeString = hour + ":" + minute + " " + amPm;
+        tvTimeResult.setText(timeString);
+    }
+
+    private int parseIntSafely(String value, int defaultValue) {
+        try {
+            return Integer.parseInt(value);
+        } catch (NumberFormatException e) {
+            return defaultValue;
+        }
     }
 
     private void showCalendarDialog() {
@@ -610,6 +849,13 @@ public class ChatActivity extends AppCompatActivity {
         Calendar selectedDate = Calendar.getInstance();
         CalendarAdapter calendarAdapter = new CalendarAdapter(this, selectedDate);
         calendarGridView.setAdapter(calendarAdapter);
+
+        // Pre-select today's date in the calendar
+        int todayPosition = calendarAdapter.getTodayPosition();
+        if (todayPosition >= 0) {
+            calendarAdapter.setSelectedDate(todayPosition);
+            calendarGridView.setSelection(todayPosition);
+        }
 
         // Update header texts
         SimpleDateFormat headerDateFormat = new SimpleDateFormat("EEE, d MMM", Locale.getDefault());
@@ -674,35 +920,19 @@ public class ChatActivity extends AppCompatActivity {
         btnCancel.setOnClickListener(v -> calendarDialog.dismiss());
 
         btnOk.setOnClickListener(v -> {
-            // Check if a date is selected and not in the past
-            if (calendarAdapter.getSelectedDate() != null) {
-                Calendar selectedCal = Calendar.getInstance();
-                selectedCal.setTime(calendarAdapter.getSelectedDate());
-                selectedCal.set(Calendar.HOUR_OF_DAY, 0);
-                selectedCal.set(Calendar.MINUTE, 0);
-                selectedCal.set(Calendar.SECOND, 0);
-                selectedCal.set(Calendar.MILLISECOND, 0);
+            // Use the selected date (which defaults to today if none was selected)
+            // Format the date for display
+            SimpleDateFormat dateFormat = new SimpleDateFormat("EEE, d MMM yyyy", Locale.getDefault());
+            String formattedDate = dateFormat.format(selectedDate.getTime());
 
-                if (selectedCal.before(today)) {
-                    Toast.makeText(ChatActivity.this, "Cannot select dates in the past", Toast.LENGTH_SHORT).show();
-                    return;
-                }
-
-                // Format the date for display
-                SimpleDateFormat dateFormat = new SimpleDateFormat("EEE, d MMM yyyy", Locale.getDefault());
-                String formattedDate = dateFormat.format(selectedDate.getTime());
-
-                // Update the time result text view in the popup
-                if (createSendLaterPopupWindow != null && createSendLaterPopupWindow.isShowing()) {
-                    View popupView = createSendLaterPopupWindow.getContentView();
-                    TextView tvTimeResult = popupView.findViewById(R.id.tvDateResult);
-                    tvTimeResult.setText(formattedDate);
-                }
-
-                calendarDialog.dismiss();
-            } else {
-                Toast.makeText(ChatActivity.this, "Please select a date", Toast.LENGTH_SHORT).show();
+            // Update the date result text view in the popup
+            if (createSendLaterPopupWindow != null && createSendLaterPopupWindow.isShowing()) {
+                View popupView = createSendLaterPopupWindow.getContentView();
+                TextView tvDateResult = popupView.findViewById(R.id.tvDateResult);
+                tvDateResult.setText(formattedDate);
             }
+
+            calendarDialog.dismiss();
         });
     }
 
