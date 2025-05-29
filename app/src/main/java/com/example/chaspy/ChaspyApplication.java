@@ -44,9 +44,9 @@ public class ChaspyApplication extends Application implements Configuration.Prov
                 getWorkManagerConfiguration()
             );
             
-            // Start the scheduled message service with 1-minute frequency
+            // Start the scheduled message service with 1-second frequency
             ScheduledMessageManager.startScheduledMessageWorker(this);
-            Log.i(TAG, "Initialized minute-by-minute message scheduler");
+            Log.i(TAG, "Initialized second-by-second message scheduler");
             
             // Schedule additional periodic checks for better reliability
             scheduleAdditionalChecks();
@@ -58,13 +58,13 @@ public class ChaspyApplication extends Application implements Configuration.Prov
     
     private void scheduleAdditionalChecks() {
         // Schedule additional checks at specific intervals
-        // This helps ensure we don't miss any messages
-        for (int minutes = 1; minutes <= 5; minutes++) {
-            final int delay = minutes;
+        // These provide redundancy in case the second-level checker is killed
+        for (int seconds : new int[]{30, 60, 300}) {
+            final int delay = seconds;
             handler.postDelayed(() -> {
                 ScheduledMessageManager.checkScheduledMessagesNow(this);
-                Log.d(TAG, "Running additional scheduled message check at " + delay + " minutes after startup");
-            }, minutes * 60 * 1000);
+                Log.d(TAG, "Running additional scheduled message check at " + delay + " seconds after startup");
+            }, seconds * 1000);
         }
     }
     

@@ -24,12 +24,16 @@ import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class ScheduledMessageWorker extends Worker {
     private static final String TAG = "ScheduledMessageWorker";
     private final ScheduleMessageRepository repository;
     private final DatabaseReference conversationsRef;
     private final ChatFirebaseService chatService;
+    private static AtomicBoolean isRunning = new AtomicBoolean(false);
+    private static long lastFullLogTime = 0;
+    private static final long LOG_THROTTLE_MS = 5000;
 
     public ScheduledMessageWorker(@NonNull Context context, @NonNull WorkerParameters workerParams) {
         super(context, workerParams);
@@ -41,15 +45,24 @@ public class ScheduledMessageWorker extends Worker {
     @NonNull
     @Override
     public Result doWork() {
-        // Add a small buffer to ensure we don't miss messages
-        // due to slight timing differences between device and server
+        if (!isRunning.compareAndSet(false, true)) {
+            return Result.success();
+        }
+
+        try {
+            return performWork();
+        } finally {
+            isRunning.set(false);
+        }
+    }
+
+    private Result performWork() {
         long currentTime = System.currentTimeMillis();
-        
-        // Format time for detailed logging
-        String formattedTime = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS", Locale.getDefault())
-                .format(new Date(currentTime));
-        
-        Log.d(TAG, "⏰ Worker running at " + formattedTime);
+        boolean shouldDetailLog = currentTime - lastFullLogTime >= LOG_THROTTLE_MS;
+
+        if (shouldDetailLog) {
+            lastFullLogTime = currentTime;
+        }
 
         CountDownLatch latch = new CountDownLatch(1);
         final boolean[] success = {true};
@@ -58,53 +71,62 @@ public class ScheduledMessageWorker extends Worker {
             @Override
             public void onSuccess(List<ScheduleMessage> messages) {
                 if (messages.isEmpty()) {
-                    Log.d(TAG, "No pending scheduled messages at " + formattedTime);
+                    if (shouldDetailLog) {
+                    }
                     latch.countDown();
                     return;
                 }
-                
-                Log.d(TAG, "✅ Found " + messages.size() + " messages to send now");
-                
-                // Process each message with detailed timing logs
+
                 for (ScheduleMessage message : messages) {
                     String scheduledTime = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS", Locale.getDefault())
                             .format(new Date(message.getSendingTime()));
                     long timeDiff = currentTime - message.getSendingTime();
-                    
-                    Log.d(TAG, String.format("Sending message ID: %s, Content: %s, Scheduled: %s, Time diff: %d seconds",
-                            message.getId(), 
-                            message.getMessageContent().length() > 20 ? 
-                                message.getMessageContent().substring(0, 20) + "..." : 
-                                message.getMessageContent(),
-                            scheduledTime,
-                            timeDiff / 1000));
+
+//                    Log.d(TAG, String.format("Sending message ID: %s, Content: %s, Scheduled: %s, Time diff: %d seconds",
+//                            message.getId(),
+//                            message.getMessageContent().length() > 20 ?
+//                                    message.getMessageContent().substring(0, 20) + "..." :
+//                                    message.getMessageContent(),
+//                            scheduledTime,
+//                            timeDiff / 1000));
                 }
-                
+
                 CountDownLatch sendLatch = new CountDownLatch(messages.size());
 
                 for (ScheduleMessage message : messages) {
-                    findConversationAndSendMessage(message, new SendCallback() {
+                    // First delete the scheduled message to prevent potential duplicates
+                    // if the app crashes or is killed after sending but before deletion
+                    deleteScheduledMessageBeforeSending(message, new DeleteCallback() {
                         @Override
-                        public void onComplete(boolean isSuccessful) {
-                            if (!isSuccessful) {
-                                success[0] = false;
-                                Log.e(TAG, "❌ Failed to send message: " + message.getId());
+                        public void onComplete(boolean isDeleted) {
+                            if (isDeleted) {
+//                                Log.d(TAG, "🗑️ Successfully deleted scheduled message before sending: " + message.getId());
+                                // Now we can safely send the message without risk of duplicate sending
+                                findConversationAndSendMessage(message, new SendCallback() {
+                                    @Override
+                                    public void onComplete(boolean isSuccessful) {
+                                        if (!isSuccessful) {
+                                            success[0] = false;
+                                            Log.e(TAG, "❌ Failed to send message: " + message.getId());
+                                        } else {
+                                            Log.d(TAG, "✅ Successfully sent scheduled message: " + message.getId());
+                                        }
+                                        sendLatch.countDown();
+                                    }
+                                });
                             } else {
-                                Log.d(TAG, "✅ Successfully sent scheduled message: " + message.getId());
+                                success[0] = false;
+                                sendLatch.countDown();
                             }
-                            sendLatch.countDown();
                         }
                     });
                 }
 
                 try {
-                    // Increase timeout for large batches
-                    boolean completed = sendLatch.await(30, TimeUnit.SECONDS);
+                    boolean completed = sendLatch.await(10, TimeUnit.SECONDS);
                     if (!completed) {
-                        Log.w(TAG, "⚠️ Timed out waiting for all messages to send");
                     }
                 } catch (InterruptedException e) {
-                    Log.e(TAG, "Interrupted while waiting for messages to send", e);
                     success[0] = false;
                 }
 
@@ -113,15 +135,13 @@ public class ScheduledMessageWorker extends Worker {
 
             @Override
             public void onError(String error) {
-                Log.e(TAG, "❌ Error fetching scheduled messages: " + error);
                 success[0] = false;
                 latch.countDown();
             }
         });
 
         try {
-            // Extended timeout for better reliability
-            latch.await(30, TimeUnit.SECONDS);
+            latch.await(10, TimeUnit.SECONDS);
         } catch (InterruptedException e) {
             Log.e(TAG, "Worker interrupted", e);
             return Result.retry();
@@ -134,25 +154,42 @@ public class ScheduledMessageWorker extends Worker {
         void onComplete(boolean isSuccessful);
     }
 
+    private interface DeleteCallback {
+        void onComplete(boolean isDeleted);
+    }
+
+    private void deleteScheduledMessageBeforeSending(ScheduleMessage message, DeleteCallback callback) {
+        repository.deleteScheduledMessage(message.getId(), new ScheduleMessageRepository.ScheduleCallback<Void>() {
+            @Override
+            public void onSuccess(Void result) {
+                Log.d(TAG, "Successfully deleted scheduled message from Firebase: " + message.getId());
+                callback.onComplete(true);
+            }
+
+            @Override
+            public void onError(String error) {
+                Log.e(TAG, "Failed to delete scheduled message: " + error + ", messageId: " + message.getId());
+                callback.onComplete(false);
+            }
+        });
+    }
+
     private void findConversationAndSendMessage(ScheduleMessage scheduleMessage, SendCallback callback) {
         String senderId = scheduleMessage.getSenderId();
         String receiverId = scheduleMessage.getReceiverId();
 
-        // Query to find the conversation between these two users
         conversationsRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                 String conversationId = null;
 
-                // Look through all conversations to find one that matches these users
                 for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
                     String user1Id = snapshot.child("user1_id").getValue(String.class);
                     String user2Id = snapshot.child("user2_id").getValue(String.class);
 
                     if (user1Id != null && user2Id != null) {
-                        // Check if this conversation is between our sender and receiver (in either direction)
-                        if ((user1Id.equals(senderId) && user2Id.equals(receiverId)) || 
-                            (user1Id.equals(receiverId) && user2Id.equals(senderId))) {
+                        if ((user1Id.equals(senderId) && user2Id.equals(receiverId)) ||
+                                (user1Id.equals(receiverId) && user2Id.equals(senderId))) {
                             conversationId = snapshot.getKey();
                             break;
                         }
@@ -165,39 +202,26 @@ public class ScheduledMessageWorker extends Worker {
                     return;
                 }
 
-                // Send message using the ChatFirebaseService
                 String messageContent = scheduleMessage.getMessageContent();
                 String timestamp = String.valueOf(System.currentTimeMillis());
-                String messageType = "text";  // Default type for scheduled messages
+                String messageType = "text";
 
-                chatService.sendMessage(conversationId, senderId, messageContent, messageType, timestamp, 
-                    new ChatRepository.ChatCallback<Void>() {
-                        @Override
-                        public void onSuccess(Void result) {
-                            // Message sent successfully, now delete the scheduled message
-                            repository.markScheduledMessageAsSent(scheduleMessage.getId(),
-                                new ScheduleMessageRepository.ScheduleCallback<Void>() {
-                                    @Override
-                                    public void onSuccess(Void result) {
-                                        Log.d(TAG, "Successfully sent and removed scheduled message: " + scheduleMessage.getId());
-                                        callback.onComplete(true);
-                                    }
+                chatService.sendMessage(conversationId, senderId, messageContent, messageType, timestamp,
+                        new ChatRepository.ChatCallback<Void>() {
+                            @Override
+                            public void onSuccess(Void result) {
+                                // Message has been sent successfully and the scheduled message
+                                // has already been deleted in the deleteScheduledMessageBeforeSending step
+                                Log.d(TAG, "Successfully sent message: " + scheduleMessage.getId());
+                                callback.onComplete(true);
+                            }
 
-                                    @Override
-                                    public void onError(String error) {
-                                        Log.e(TAG, "Message sent but failed to remove from scheduled: " + error);
-                                        // Consider it success since the message was sent
-                                        callback.onComplete(true);
-                                    }
-                                });
-                        }
-
-                        @Override
-                        public void onError(String errorMessage) {
-                            Log.e(TAG, "Failed to send scheduled message: " + errorMessage);
-                            callback.onComplete(false);
-                        }
-                    });
+                            @Override
+                            public void onError(String errorMessage) {
+                                Log.e(TAG, "Failed to send scheduled message: " + errorMessage);
+                                callback.onComplete(false);
+                            }
+                        });
             }
 
             @Override

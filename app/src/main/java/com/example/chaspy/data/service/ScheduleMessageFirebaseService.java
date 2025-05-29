@@ -163,17 +163,50 @@ public class ScheduleMessageFirebaseService {
     }
 
     /**
-     * Delete a scheduled message
+     * Delete a scheduled message from Firebase
+     * Enhanced with more detailed error handling and logging
      */
     public void deleteScheduledMessage(String messageId, ScheduleCallback<Void> callback) {
-        scheduleMessagesRef.child(messageId).removeValue()
-                .addOnSuccessListener(aVoid -> callback.onSuccess(null))
-                .addOnFailureListener(new OnFailureListener() {
-                    @Override
-                    public void onFailure(@NonNull Exception e) {
-                        callback.onError("Failed to delete message: " + e.getMessage());
-                    }
-                });
+        if (messageId == null || messageId.isEmpty()) {
+            Log.e(TAG, "Cannot delete message with null or empty ID");
+            callback.onError("Invalid message ID");
+            return;
+        }
+
+        Log.d(TAG, "Attempting to delete scheduled message: " + messageId);
+
+        // Verify message exists before attempting deletion
+        scheduleMessagesRef.child(messageId).addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                if (!dataSnapshot.exists()) {
+                    Log.w(TAG, "Message " + messageId + " does not exist or was already deleted");
+                    // Consider this a success since the message is already not in the database
+                    callback.onSuccess(null);
+                    return;
+                }
+
+                // Message exists, proceed with deletion
+                scheduleMessagesRef.child(messageId).removeValue()
+                        .addOnSuccessListener(aVoid -> {
+                            Log.d(TAG, "Successfully deleted scheduled message: " + messageId);
+                            callback.onSuccess(null);
+                        })
+                        .addOnFailureListener(new OnFailureListener() {
+                            @Override
+                            public void onFailure(@NonNull Exception e) {
+                                Log.e(TAG, "Failed to delete message " + messageId + ": " + e.getMessage(), e);
+                                callback.onError("Failed to delete message: " + e.getMessage());
+                            }
+                        });
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+                Log.e(TAG, "Error checking message " + messageId + ": " + databaseError.getMessage());
+                callback.onError("Failed to access message: " + databaseError.getMessage());
+            }
+        });
     }
 
     /**

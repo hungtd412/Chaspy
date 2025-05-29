@@ -41,17 +41,20 @@ public class ScheduleMessageRepository {
     }
 
     /**
-     * Delete a scheduled message
+     * Delete a scheduled message from Firebase
      */
     public void deleteScheduledMessage(String messageId, ScheduleCallback<Void> callback) {
+        Log.d(TAG, "Deleting scheduled message with ID: " + messageId);
         firebaseService.deleteScheduledMessage(messageId, new ScheduleMessageFirebaseService.ScheduleCallback<Void>() {
             @Override
             public void onSuccess(Void result) {
+                Log.d(TAG, "Successfully deleted scheduled message: " + messageId);
                 callback.onSuccess(null);
             }
 
             @Override
             public void onError(String error) {
+                Log.e(TAG, "Error deleting scheduled message " + messageId + ": " + error);
                 callback.onError(error);
             }
         });
@@ -129,19 +132,11 @@ public class ScheduleMessageRepository {
     }
 
     /**
-     * Mark a scheduled message as sent
+     * This method has been replaced by deleteScheduledMessage to better reflect its functionality
+     * @deprecated Use deleteScheduledMessage instead
      */
+    @Deprecated
     public void markScheduledMessageAsSent(String messageId, ScheduleCallback<Void> callback) {
-        firebaseService.deleteScheduledMessage(messageId, new ScheduleMessageFirebaseService.ScheduleCallback<Void>() {
-            @Override
-            public void onSuccess(Void result) {
-                callback.onSuccess(null);
-            }
-
-            @Override
-            public void onError(String error) {
-                callback.onError(error);
-            }
-        });
+        deleteScheduledMessage(messageId, callback);
     }
 }
