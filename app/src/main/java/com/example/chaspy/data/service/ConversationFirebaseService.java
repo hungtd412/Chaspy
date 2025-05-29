@@ -181,12 +181,12 @@ public class ConversationFirebaseService {
                                     }
                                 });
                             } else {
-                                callback.onFailure("Users are not friends");
+//                                callback.onFailure("Users are not friends");
                             }
                         }
                     });
                 } else {
-                    callback.onFailure("Conversation not found");
+//                    callback.onFailure("Conversation not found");
                 }
             }
             
@@ -202,6 +202,8 @@ public class ConversationFirebaseService {
         usersRef.child(userId).child("friends").child(friendId).addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
+                System.out.println(userId);
+                System.out.println(friendId);
                 // If the value exists and is true, they are friends
                 boolean areFriends = snapshot.exists() && Boolean.TRUE.equals(snapshot.getValue(Boolean.class));
                 callback.onResult(areFriends);

@@ -105,11 +105,11 @@
   },
   "schedule_messages": {
     "pN8V1sW7q3XbL6yJzD9cG2R0F5aK4Tq": {
+      "conversation_id": "b2Yk3z4C5D6E7F8G9H10i11J12K13L14M15",
       "sender_id": "RmsYxP2v9vb2KBgdMQm6P6z5nR83",
       "receiver_id": "knSSoOecJIfwphK6tjKbU0beHww2",
-      "sending_time": "1748473260000",
-      "message_content": "Scheduled message content",
-      "status": "waiting"
+      "sending_time": "1748605521000",
+      "message_content": "Scheduled message content"
     }
   },
   "general_information": {

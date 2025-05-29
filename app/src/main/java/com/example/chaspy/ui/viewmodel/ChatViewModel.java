@@ -5,7 +5,9 @@ import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
 import com.example.chaspy.data.model.Message;
+import com.example.chaspy.data.model.ScheduleMessage;
 import com.example.chaspy.data.repository.ChatRepository;
+import com.example.chaspy.data.repository.ScheduleMessageRepository;
 
 import java.util.HashMap;
 import java.util.List;
@@ -13,17 +15,21 @@ import java.util.Map;
 
 public class ChatViewModel extends ViewModel {
     private final ChatRepository chatRepository;
+    private final ScheduleMessageRepository scheduleMessageRepository;
     private final MutableLiveData<List<Message>> messageList = new MutableLiveData<>();
     private final MutableLiveData<String> errorMessage = new MutableLiveData<>();
     private final MutableLiveData<Boolean> isLoading = new MutableLiveData<>(false);
     private final MutableLiveData<Message> newMessageAdded = new MutableLiveData<>();
+    private final MutableLiveData<List<ScheduleMessage>> scheduledMessages = new MutableLiveData<>();
     
     private String conversationId;
     private String currentUserId;
+    private String friendId;
     private Map<String, Message> messageMap = new HashMap<>();
     
     public ChatViewModel() {
         chatRepository = new ChatRepository();
+        scheduleMessageRepository = new ScheduleMessageRepository();
     }
     
     public void init(String conversationId, String currentUserId) {
@@ -31,6 +37,10 @@ public class ChatViewModel extends ViewModel {
         this.currentUserId = currentUserId;
         messageMap.clear(); // Clear existing messages when initializing
         loadMessages();
+    }
+    
+    public void setFriendId(String friendId) {
+        this.friendId = friendId;
     }
     
     public LiveData<List<Message>> getMessages() {
@@ -47,6 +57,10 @@ public class ChatViewModel extends ViewModel {
     
     public LiveData<Message> getNewMessageAdded() {
         return newMessageAdded;
+    }
+    
+    public LiveData<List<ScheduleMessage>> getScheduledMessages() {
+        return scheduledMessages;
     }
     
     public void loadMessages() {
@@ -107,6 +121,96 @@ public class ChatViewModel extends ViewModel {
         chatRepository.sendMessage(conversationId, currentUserId, messageText, new ChatRepository.ChatCallback<Void>() {
             @Override
             public void onSuccess(Void result) {
+                isLoading.setValue(false);
+            }
+            
+            @Override
+            public void onError(String error) {
+                errorMessage.setValue(error);
+                isLoading.setValue(false);
+            }
+        });
+    }
+    
+    public void loadScheduledMessages() {
+        if (currentUserId == null) {
+            errorMessage.setValue("User not logged in");
+            return;
+        }
+        
+        isLoading.setValue(true);
+        
+        scheduleMessageRepository.getScheduledMessages(currentUserId, new ScheduleMessageRepository.ScheduleCallback<List<ScheduleMessage>>() {
+            @Override
+            public void onSuccess(List<ScheduleMessage> messages) {
+                scheduledMessages.setValue(messages);
+                isLoading.setValue(false);
+            }
+            
+            @Override
+            public void onError(String error) {
+                errorMessage.setValue(error);
+                isLoading.setValue(false);
+            }
+        });
+    }
+    
+    public void deleteScheduledMessage(String messageId) {
+        if (messageId == null || messageId.isEmpty()) {
+            errorMessage.setValue("Invalid message ID");
+            return;
+        }
+        
+        isLoading.setValue(true);
+        
+        scheduleMessageRepository.deleteScheduledMessage(messageId, new ScheduleMessageRepository.ScheduleCallback<Void>() {
+            @Override
+            public void onSuccess(Void result) {
+                // Refresh the list after deletion
+                loadScheduledMessages();
+                isLoading.setValue(false);
+            }
+            
+            @Override
+            public void onError(String error) {
+                errorMessage.setValue(error);
+                isLoading.setValue(false);
+            }
+        });
+    }
+    
+    public void addScheduledMessage(String messageContent, long scheduledTime) {
+        if (messageContent == null || messageContent.trim().isEmpty()) {
+            errorMessage.setValue("Message content cannot be empty");
+            return;
+        }
+        
+        if (scheduledTime <= System.currentTimeMillis()) {
+            errorMessage.setValue("Scheduled time must be in the future");
+            return;
+        }
+        
+        if (currentUserId == null || friendId == null) {
+            errorMessage.setValue("User or friend information missing");
+            return;
+        }
+        
+        isLoading.setValue(true);
+        
+        // Create message with conversationId
+        ScheduleMessage message = new ScheduleMessage(
+                null, 
+                currentUserId, 
+                friendId,
+                messageContent, 
+                scheduledTime, 
+                conversationId);  // Include conversation ID
+        
+        scheduleMessageRepository.addScheduledMessage(message, new ScheduleMessageRepository.ScheduleCallback<String>() {
+            @Override
+            public void onSuccess(String messageId) {
+                // Refresh the list after addition
+                loadScheduledMessages();
                 isLoading.setValue(false);
             }
             

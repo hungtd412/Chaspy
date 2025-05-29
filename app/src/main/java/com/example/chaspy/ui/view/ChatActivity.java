@@ -2,6 +2,7 @@ package com.example.chaspy.ui.view;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -34,7 +35,9 @@ import androidx.lifecycle.ViewModelProvider;
 import com.example.chaspy.R;
 import com.example.chaspy.ui.adapter.CalendarAdapter;
 import com.example.chaspy.ui.adapter.MessageAdapter;
+import com.example.chaspy.ui.adapter.ScheduleMessageAdapter;
 import com.example.chaspy.ui.viewmodel.ChatViewModel;
+import com.example.chaspy.data.model.ScheduleMessage;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.squareup.picasso.Picasso;
@@ -42,7 +45,6 @@ import com.squareup.picasso.Picasso;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
-import java.util.Locale;
 
 public class ChatActivity extends AppCompatActivity {
 
@@ -65,6 +67,12 @@ public class ChatActivity extends AppCompatActivity {
     private String friendProfilePicUrl;
     private String friendId;
     private String currentUserId;
+
+    // Keep track of the currently selected color
+    private View currentSelectedSelector = null;
+    private String selectedColorHex = "#8CE4F0"; // Default color
+    private PopupWindow sendLaterPopupWindow;
+    private PopupWindow createSendLaterPopupWindow;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -109,6 +117,11 @@ public class ChatActivity extends AppCompatActivity {
 
         // Initialize ViewModel
         initializeViewModel();
+
+        // Add friendId to ViewModel for scheduled messages
+        if (friendId != null) {
+            chatViewModel.setFriendId(friendId);
+        }
     }
 
     private void initializeViews() {
@@ -340,10 +353,6 @@ public class ChatActivity extends AppCompatActivity {
         btnCancel.setOnClickListener(v -> popupWindow.dismiss());
     }
 
-    // Keep track of the currently selected color
-    private View currentSelectedSelector = null;
-    private String selectedColorHex = "#8CE4F0"; // Default color
-
     private void setupColorSelectors(View popupView) {
         // Get all color views
         View colorLightBlue = popupView.findViewById(R.id.colorLightBlue);
@@ -443,7 +452,7 @@ public class ChatActivity extends AppCompatActivity {
 
         // Set click listeners for popup items
         View cameraLayout = popupView.findViewById(R.id.cameraLayout);
-        View sendLaterLayout = popupView.findViewById(R.id.timeLayout);
+        View sendLaterLayout = popupView.findViewById(R.id.sendLaterButtonLayout);
 
         cameraLayout.setOnClickListener(v -> {
             // Handle camera action
@@ -494,20 +503,77 @@ public class ChatActivity extends AppCompatActivity {
 
         return popupWindow;
     }
-    private PopupWindow sendLaterPopupWindow;
-    private PopupWindow createSendLaterPopupWindow;
+
     private void showSendLaterPopup() {
         View popupViewSendLater = getLayoutInflater().inflate(R.layout.popup_send_later, null);
         sendLaterPopupWindow = createPopupWindow(popupViewSendLater, R.dimen.popup_width_medium);
 
+        // Initialize RecyclerView
+        RecyclerView recyclerView = popupViewSendLater.findViewById(R.id.recyclerViewScheduled);
+        TextView emptyStateText = popupViewSendLater.findViewById(R.id.emptyStateText);
+
+        // Initialize adapter
+        ScheduleMessageAdapter adapter = new ScheduleMessageAdapter();
+        recyclerView.setAdapter(adapter);
+        recyclerView.setLayoutManager(new LinearLayoutManager(this));
+
+        // Set up delete click listener
+        adapter.setOnItemClickListener(new ScheduleMessageAdapter.OnItemClickListener() {
+            @Override
+            public void onDeleteClick(ScheduleMessage message) {
+                showDeleteConfirmationDialog(message);
+            }
+        });
+
+        // Set click listeners
         ImageView btnAdd = popupViewSendLater.findViewById(R.id.btnAdd);
         btnAdd.setOnClickListener(v -> addSendLaterItem());
 
-        // Dismiss the plus popup
+        // Observe scheduled messages from ViewModel
+        chatViewModel.getScheduledMessages().observe(this, messages -> {
+            if (messages != null && !messages.isEmpty()) {
+                adapter.setScheduledMessages(messages);
+                recyclerView.setVisibility(View.VISIBLE);
+                emptyStateText.setVisibility(View.GONE);
+            } else {
+                recyclerView.setVisibility(View.GONE);
+                emptyStateText.setVisibility(View.VISIBLE);
+            }
+        });
+
+        // Observe loading state
+        chatViewModel.getIsLoading().observe(this, isLoading -> {
+            // You can add loading indicator if needed
+        });
+
+        // Load scheduled messages
+        chatViewModel.loadScheduledMessages();
+
+        // Dismiss the plus popup if showing
         if (plusPopupWindow != null && plusPopupWindow.isShowing()) {
             plusPopupWindow.dismiss();
         }
     }
+
+    private void showDeleteConfirmationDialog(ScheduleMessage message) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Delete Scheduled Message");
+        builder.setMessage("Are you sure you want to delete this scheduled message?");
+
+        builder.setPositiveButton("Delete", (dialog, which) -> {
+            // Call ViewModel to delete the message
+            if (message.getId() != null) {
+                chatViewModel.deleteScheduledMessage(message.getId());
+                Toast.makeText(ChatActivity.this, "Message deleted", Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        builder.setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss());
+
+        AlertDialog dialog = builder.create();
+        dialog.show();
+    }
+
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
@@ -697,7 +763,7 @@ public class ChatActivity extends AppCompatActivity {
             }
         });
 
-// Add focus listener to format minutes properly when focus changes
+        // Add focus listener to format minutes properly when focus changes
         etMinute.setOnFocusChangeListener((v, hasFocus) -> {
             if (!hasFocus) {
                 // When losing focus, ensure proper format with leading zeros
@@ -763,15 +829,29 @@ public class ChatActivity extends AppCompatActivity {
                 int hourValue = Integer.parseInt(hour);
                 int minuteValue = Integer.parseInt(minute);
                 boolean isPM = spinnerAmPm.getSelectedItem().toString().equals("PM");
+                
+                // Convert 12-hour format to 24-hour format
+                int hour24Format;
+                if (isPM) {
+                    // PM: Add 12 to hours, except for 12 PM which stays as 12
+                    hour24Format = (hourValue == 12) ? 12 : hourValue + 12;
+                } else {
+                    // AM: Keep hours as is, except for 12 AM which becomes 0
+                    hour24Format = (hourValue == 12) ? 0 : hourValue;
+                }
+                
+                // Log the time conversion for debugging
+                Log.d("ChatActivity", String.format("Time conversion: %d:%02d %s → %02d:%02d (24-hour)",
+                        hourValue, minuteValue, isPM ? "PM" : "AM", hour24Format, minuteValue));
 
-                // Create calendar with selected date and time
+                // Create calendar with selected date and time (using 24-hour format)
                 Calendar scheduledTime = Calendar.getInstance();
                 scheduledTime.setTime(selectedDate);
-                scheduledTime.set(Calendar.HOUR, hourValue);
+                scheduledTime.set(Calendar.HOUR_OF_DAY, hour24Format);  // Use 24-hour format
                 scheduledTime.set(Calendar.MINUTE, minuteValue);
                 scheduledTime.set(Calendar.SECOND, 0);
                 scheduledTime.set(Calendar.MILLISECOND, 0);
-                scheduledTime.set(Calendar.AM_PM, isPM ? Calendar.PM : Calendar.AM);
+                // No need to set AM_PM when using HOUR_OF_DAY
 
                 // Compare with current time
                 Calendar now = Calendar.getInstance();
@@ -782,19 +862,24 @@ public class ChatActivity extends AppCompatActivity {
 
                 // Get timestamp (milliseconds since epoch)
                 long scheduledTimestamp = scheduledTime.getTimeInMillis();
+                
+                // Log the scheduled time for verification
+                SimpleDateFormat logFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault());
+                Log.d("ChatActivity", "Scheduling message for: " + logFormat.format(new Date(scheduledTimestamp)) + 
+                      " in conversation: " + conversationId);
 
-
-                Toast.makeText(ChatActivity.this,
-                        "Message scheduled for timestamp: " + scheduledTimestamp,
-                        Toast.LENGTH_SHORT).show();
-
+                // Create and save the scheduled message
+                chatViewModel.addScheduledMessage(message, scheduledTimestamp);
+                
+                Toast.makeText(ChatActivity.this, "Message scheduled successfully", Toast.LENGTH_SHORT).show();
                 createSendLaterPopupWindow.dismiss();
-                // Show the send later popup again
+                
+                // Show the send later popup again to see the updated list
                 showSendLaterPopup();
 
             } catch (Exception e) {
                 Toast.makeText(ChatActivity.this, "Invalid date or time format", Toast.LENGTH_SHORT).show();
-                e.printStackTrace();
+                Log.e("ChatActivity", "Error scheduling message: " + e.getMessage(), e);
             }
         });
     }

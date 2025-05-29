@@ -28,17 +28,6 @@
             app:layout_constraintTop_toTopOf="parent" />
 
         <ImageView
-            android:id="@+id/btnSort"
-            android:layout_width="24dp"
-            android:layout_height="24dp"
-            android:src="@drawable/ic_sort"
-            android:tint="#4D97FF"
-            android:layout_marginEnd="16dp"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toStartOf="@+id/btnAdd"
-            app:layout_constraintTop_toTopOf="parent" />
-
-        <ImageView
             android:id="@+id/btnAdd"
             android:layout_width="24dp"
             android:layout_height="24dp"
