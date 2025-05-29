@@ -2,6 +2,7 @@ package com.example.chaspy.ui.view;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -828,15 +829,29 @@ public class ChatActivity extends AppCompatActivity {
                 int hourValue = Integer.parseInt(hour);
                 int minuteValue = Integer.parseInt(minute);
                 boolean isPM = spinnerAmPm.getSelectedItem().toString().equals("PM");
+                
+                // Convert 12-hour format to 24-hour format
+                int hour24Format;
+                if (isPM) {
+                    // PM: Add 12 to hours, except for 12 PM which stays as 12
+                    hour24Format = (hourValue == 12) ? 12 : hourValue + 12;
+                } else {
+                    // AM: Keep hours as is, except for 12 AM which becomes 0
+                    hour24Format = (hourValue == 12) ? 0 : hourValue;
+                }
+                
+                // Log the time conversion for debugging
+                Log.d("ChatActivity", String.format("Time conversion: %d:%02d %s → %02d:%02d (24-hour)",
+                        hourValue, minuteValue, isPM ? "PM" : "AM", hour24Format, minuteValue));
 
-                // Create calendar with selected date and time
+                // Create calendar with selected date and time (using 24-hour format)
                 Calendar scheduledTime = Calendar.getInstance();
                 scheduledTime.setTime(selectedDate);
-                scheduledTime.set(Calendar.HOUR, hourValue);
+                scheduledTime.set(Calendar.HOUR_OF_DAY, hour24Format);  // Use 24-hour format
                 scheduledTime.set(Calendar.MINUTE, minuteValue);
                 scheduledTime.set(Calendar.SECOND, 0);
                 scheduledTime.set(Calendar.MILLISECOND, 0);
-                scheduledTime.set(Calendar.AM_PM, isPM ? Calendar.PM : Calendar.AM);
+                // No need to set AM_PM when using HOUR_OF_DAY
 
                 // Compare with current time
                 Calendar now = Calendar.getInstance();
@@ -847,6 +862,10 @@ public class ChatActivity extends AppCompatActivity {
 
                 // Get timestamp (milliseconds since epoch)
                 long scheduledTimestamp = scheduledTime.getTimeInMillis();
+                
+                // Log the scheduled time for verification
+                SimpleDateFormat logFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault());
+                Log.d("ChatActivity", "Scheduling message for: " + logFormat.format(new Date(scheduledTimestamp)));
 
                 // Create and save the scheduled message
                 chatViewModel.addScheduledMessage(message, scheduledTimestamp);
@@ -859,7 +878,7 @@ public class ChatActivity extends AppCompatActivity {
 
             } catch (Exception e) {
                 Toast.makeText(ChatActivity.this, "Invalid date or time format", Toast.LENGTH_SHORT).show();
-                e.printStackTrace();
+                Log.e("ChatActivity", "Error scheduling message: " + e.getMessage(), e);
             }
         });
     }
