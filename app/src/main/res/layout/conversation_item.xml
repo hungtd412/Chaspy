@@ -31,6 +31,8 @@
         android:textStyle="bold"
         android:textColor="@android:color/black"
         android:text="RONALDO"
+        android:maxLines="1"
+        android:ellipsize="end"
         app:layout_constraintStart_toEndOf="@id/profilePicImageView"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
@@ -46,6 +48,8 @@
         android:textSize="14sp"
         android:textColor="#757575"
         android:text="You: Hello"
+        android:maxLines="1"
+        android:ellipsize="end"
         app:layout_constraintStart_toEndOf="@id/profilePicImageView"
         app:layout_constraintTop_toBottomOf="@id/friendUsernameTextView"
         app:layout_constraintEnd_toStartOf="@id/lastMessageTimeTextView" />
