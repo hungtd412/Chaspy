@@ -848,12 +848,13 @@ public class ChatActivity extends AppCompatActivity {
                 // Get timestamp (milliseconds since epoch)
                 long scheduledTimestamp = scheduledTime.getTimeInMillis();
 
-                Toast.makeText(ChatActivity.this,
-                        "Message scheduled for timestamp: " + scheduledTimestamp,
-                        Toast.LENGTH_SHORT).show();
-
+                // Create and save the scheduled message
+                chatViewModel.addScheduledMessage(message, scheduledTimestamp);
+                
+                Toast.makeText(ChatActivity.this, "Message scheduled successfully", Toast.LENGTH_SHORT).show();
                 createSendLaterPopupWindow.dismiss();
-                // Show the send later popup again
+                
+                // Show the send later popup again to see the updated list
                 showSendLaterPopup();
 
             } catch (Exception e) {
