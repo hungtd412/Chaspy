@@ -81,27 +81,15 @@ public class ScheduledMessageWorker extends Worker {
                     String scheduledTime = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS", Locale.getDefault())
                             .format(new Date(message.getSendingTime()));
                     long timeDiff = currentTime - message.getSendingTime();
-
-//                    Log.d(TAG, String.format("Sending message ID: %s, Content: %s, Scheduled: %s, Time diff: %d seconds",
-//                            message.getId(),
-//                            message.getMessageContent().length() > 20 ?
-//                                    message.getMessageContent().substring(0, 20) + "..." :
-//                                    message.getMessageContent(),
-//                            scheduledTime,
-//                            timeDiff / 1000));
                 }
 
                 CountDownLatch sendLatch = new CountDownLatch(messages.size());
 
                 for (ScheduleMessage message : messages) {
-                    // First delete the scheduled message to prevent potential duplicates
-                    // if the app crashes or is killed after sending but before deletion
                     deleteScheduledMessageBeforeSending(message, new DeleteCallback() {
                         @Override
                         public void onComplete(boolean isDeleted) {
                             if (isDeleted) {
-//                                Log.d(TAG, "🗑️ Successfully deleted scheduled message before sending: " + message.getId());
-                                // Now we can safely send the message without risk of duplicate sending
                                 findConversationAndSendMessage(message, new SendCallback() {
                                     @Override
                                     public void onComplete(boolean isSuccessful) {
@@ -177,7 +165,47 @@ public class ScheduledMessageWorker extends Worker {
     private void findConversationAndSendMessage(ScheduleMessage scheduleMessage, SendCallback callback) {
         String senderId = scheduleMessage.getSenderId();
         String receiverId = scheduleMessage.getReceiverId();
+        String conversationId = scheduleMessage.getConversationId();
 
+        if (conversationId != null && !conversationId.isEmpty()) {
+            Log.d(TAG, "Using direct conversationId: " + conversationId);
+
+            conversationsRef.child(conversationId).addListenerForSingleValueEvent(new ValueEventListener() {
+                @Override
+                public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                    if (dataSnapshot.exists()) {
+                        String user1Id = dataSnapshot.child("user1_id").getValue(String.class);
+                        String user2Id = dataSnapshot.child("user2_id").getValue(String.class);
+
+                        boolean isValidConversation = (user1Id != null && user2Id != null) &&
+                                ((user1Id.equals(senderId) && user2Id.equals(receiverId)) ||
+                                        (user1Id.equals(receiverId) && user2Id.equals(senderId)));
+
+                        if (isValidConversation) {
+                            sendMessageToConversation(conversationId, senderId, scheduleMessage.getMessageContent(), callback);
+                        } else {
+                            Log.w(TAG, "Conversation ID exists but doesn't match sender/receiver. Falling back to search.");
+                            findConversationByUsers(senderId, receiverId, scheduleMessage.getMessageContent(), callback);
+                        }
+                    } else {
+                        Log.w(TAG, "Conversation ID doesn't exist: " + conversationId + ". Falling back to search.");
+                        findConversationByUsers(senderId, receiverId, scheduleMessage.getMessageContent(), callback);
+                    }
+                }
+
+                @Override
+                public void onCancelled(@NonNull DatabaseError databaseError) {
+                    Log.e(TAG, "Error checking conversation: " + databaseError.getMessage());
+                    findConversationByUsers(senderId, receiverId, scheduleMessage.getMessageContent(), callback);
+                }
+            });
+        } else {
+            Log.d(TAG, "No conversationId provided, searching for conversation between: " + senderId + " and " + receiverId);
+            findConversationByUsers(senderId, receiverId, scheduleMessage.getMessageContent(), callback);
+        }
+    }
+
+    private void findConversationByUsers(String senderId, String receiverId, String messageContent, SendCallback callback) {
         conversationsRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
@@ -202,26 +230,7 @@ public class ScheduledMessageWorker extends Worker {
                     return;
                 }
 
-                String messageContent = scheduleMessage.getMessageContent();
-                String timestamp = String.valueOf(System.currentTimeMillis());
-                String messageType = "text";
-
-                chatService.sendMessage(conversationId, senderId, messageContent, messageType, timestamp,
-                        new ChatRepository.ChatCallback<Void>() {
-                            @Override
-                            public void onSuccess(Void result) {
-                                // Message has been sent successfully and the scheduled message
-                                // has already been deleted in the deleteScheduledMessageBeforeSending step
-                                Log.d(TAG, "Successfully sent message: " + scheduleMessage.getId());
-                                callback.onComplete(true);
-                            }
-
-                            @Override
-                            public void onError(String errorMessage) {
-                                Log.e(TAG, "Failed to send scheduled message: " + errorMessage);
-                                callback.onComplete(false);
-                            }
-                        });
+                sendMessageToConversation(conversationId, senderId, messageContent, callback);
             }
 
             @Override
@@ -230,5 +239,27 @@ public class ScheduledMessageWorker extends Worker {
                 callback.onComplete(false);
             }
         });
+    }
+
+    private void sendMessageToConversation(String conversationId, String senderId, String messageContent, SendCallback callback) {
+        String timestamp = String.valueOf(System.currentTimeMillis());
+        String messageType = "text";
+
+        Log.d(TAG, "Sending message to conversation: " + conversationId);
+
+        chatService.sendMessage(conversationId, senderId, messageContent, messageType, timestamp,
+                new ChatRepository.ChatCallback<Void>() {
+                    @Override
+                    public void onSuccess(Void result) {
+                        Log.d(TAG, "Successfully sent message to conversation: " + conversationId);
+                        callback.onComplete(true);
+                    }
+
+                    @Override
+                    public void onError(String errorMessage) {
+                        Log.e(TAG, "Failed to send scheduled message: " + errorMessage);
+                        callback.onComplete(false);
+                    }
+                });
     }
 }

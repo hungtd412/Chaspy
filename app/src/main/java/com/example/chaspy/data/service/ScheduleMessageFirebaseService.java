@@ -54,13 +54,14 @@ public class ScheduleMessageFirebaseService {
                         String receiverId = messageSnapshot.child("receiver_id").getValue(String.class);
                         String content = messageSnapshot.child("message_content").getValue(String.class);
                         String timeStr = messageSnapshot.child("sending_time").getValue(String.class);
+                        String conversationId = messageSnapshot.child("conversation_id").getValue(String.class);
 
                         if (receiverId != null && content != null && timeStr != null) {
                             try {
                                 // Parse string timestamp to long
                                 long time = Long.parseLong(timeStr);
                                 ScheduleMessage scheduleMessage = new ScheduleMessage(
-                                        messageId, senderId, receiverId, content, time);
+                                        messageId, senderId, receiverId, content, time, conversationId);
                                 messages.add(scheduleMessage);
                             } catch (NumberFormatException e) {
                                 // Skip invalid timestamp entries
@@ -106,11 +107,14 @@ public class ScheduleMessageFirebaseService {
                     String receiverId = messageSnapshot.child("receiver_id").getValue(String.class);
                     String content = messageSnapshot.child("message_content").getValue(String.class);
                     String timeStr = messageSnapshot.child("sending_time").getValue(String.class);
+                    String conversationId = messageSnapshot.child("conversation_id").getValue(String.class);
+                    
                     Log.d(TAG, "Processing message ID: " + messageId +
                           ", Sender: " + senderId +
                           ", Receiver: " + receiverId +
                           ", Content: " + content +
-                          ", Scheduled Time: " + timeStr);
+                          ", Scheduled Time: " + timeStr +
+                          ", Conversation: " + conversationId);
                     
                     if (messageId == null || senderId == null || receiverId == null || content == null || timeStr == null) {
                         Log.w(TAG, "Skipping invalid message with missing fields, ID: " + 
@@ -126,14 +130,14 @@ public class ScheduleMessageFirebaseService {
                                 .format(new Date(scheduledTime));
                         
                         // Enhanced logging for each message
-                        Log.d(TAG, String.format("Message ID: %s, Scheduled: %s, Current: %s, Difference: %d sec", 
+                        Log.d(TAG, String.format("Message ID: %s, Scheduled: %s, Current: %s, Difference: %d sec, Conversation: %s", 
                                 messageId, formattedScheduledTime, formattedCurrentTime, 
-                                (currentTime - scheduledTime) / 1000));
+                                (currentTime - scheduledTime) / 1000, conversationId));
                         
                         // Check if it's time to send (use <= to ensure we don't miss any messages)
                         if (scheduledTime <= currentTime) {
                             ScheduleMessage message = new ScheduleMessage(
-                                    messageId, senderId, receiverId, content, scheduledTime);
+                                    messageId, senderId, receiverId, content, scheduledTime, conversationId);
                             pendingMessages.add(message);
                             
                             Log.d(TAG, "✅ READY TO SEND: Message " + messageId + 
@@ -219,6 +223,11 @@ public class ScheduleMessageFirebaseService {
         messageValues.put("receiver_id", message.getReceiverId());
         messageValues.put("message_content", message.getMessageContent());
         messageValues.put("sending_time", String.valueOf(message.getSendingTime())); // Convert long to String
+        
+        // Add conversation_id if available
+        if (message.getConversationId() != null && !message.getConversationId().isEmpty()) {
+            messageValues.put("conversation_id", message.getConversationId());
+        }
 
         scheduleMessagesRef.child(messageId).setValue(messageValues)
                 .addOnSuccessListener(aVoid -> callback.onSuccess(messageId))

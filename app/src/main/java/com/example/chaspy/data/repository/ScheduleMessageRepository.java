@@ -80,6 +80,13 @@ public class ScheduleMessageRepository {
 
         message.setId(finalMessageId);
 
+        // Log the message being added
+        Log.d(TAG, "Adding scheduled message: ID=" + finalMessageId +
+                ", Sender=" + message.getSenderId() +
+                ", Receiver=" + message.getReceiverId() +
+                ", Time=" + new Date(message.getSendingTime()).toString() +
+                ", ConversationID=" + message.getConversationId());
+
         firebaseService.addScheduledMessage(message, finalMessageId, new ScheduleMessageFirebaseService.ScheduleCallback<String>() {
             @Override
             public void onSuccess(String result) {

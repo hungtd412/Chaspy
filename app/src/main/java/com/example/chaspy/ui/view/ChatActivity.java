@@ -865,7 +865,8 @@ public class ChatActivity extends AppCompatActivity {
                 
                 // Log the scheduled time for verification
                 SimpleDateFormat logFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault());
-                Log.d("ChatActivity", "Scheduling message for: " + logFormat.format(new Date(scheduledTimestamp)));
+                Log.d("ChatActivity", "Scheduling message for: " + logFormat.format(new Date(scheduledTimestamp)) + 
+                      " in conversation: " + conversationId);
 
                 // Create and save the scheduled message
                 chatViewModel.addScheduledMessage(message, scheduledTimestamp);

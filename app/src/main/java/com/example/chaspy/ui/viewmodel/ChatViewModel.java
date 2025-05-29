@@ -197,8 +197,14 @@ public class ChatViewModel extends ViewModel {
         
         isLoading.setValue(true);
         
-        ScheduleMessage message = new ScheduleMessage(null, currentUserId, friendId,
-                messageContent, scheduledTime);
+        // Create message with conversationId
+        ScheduleMessage message = new ScheduleMessage(
+                null, 
+                currentUserId, 
+                friendId,
+                messageContent, 
+                scheduledTime, 
+                conversationId);  // Include conversation ID
         
         scheduleMessageRepository.addScheduledMessage(message, new ScheduleMessageRepository.ScheduleCallback<String>() {
             @Override
