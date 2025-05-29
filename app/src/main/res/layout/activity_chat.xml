@@ -97,7 +97,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:padding="12dp"
-            android:background="@drawable/background_parrot_1">
+            android:background="#8CE4F0">
 
             <androidx.cardview.widget.CardView
                 android:id="@+id/btnAdd"

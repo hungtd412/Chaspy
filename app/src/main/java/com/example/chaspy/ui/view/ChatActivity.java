@@ -1,5 +1,6 @@
 package com.example.chaspy.ui.view;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -7,6 +8,8 @@ import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.GridView;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.PopupWindow;
@@ -15,6 +18,7 @@ import android.widget.Toast;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.AppCompatButton;
 import androidx.cardview.widget.CardView;
@@ -23,11 +27,17 @@ import androidx.recyclerview.widget.RecyclerView;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.example.chaspy.R;
+import com.example.chaspy.ui.adapter.CalendarAdapter;
 import com.example.chaspy.ui.adapter.MessageAdapter;
 import com.example.chaspy.ui.viewmodel.ChatViewModel;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.squareup.picasso.Picasso;
+
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.Locale;
 
 public class ChatActivity extends AppCompatActivity {
 
@@ -479,38 +489,223 @@ public class ChatActivity extends AppCompatActivity {
 
         return popupWindow;
     }
-
+    private PopupWindow sendLaterPopupWindow;
+    private PopupWindow createSendLaterPopupWindow;
     private void showSendLaterPopup() {
         View popupViewSendLater = getLayoutInflater().inflate(R.layout.popup_send_later, null);
-        PopupWindow popupWindow = createPopupWindow(popupViewSendLater, R.dimen.popup_width_medium);
+        sendLaterPopupWindow = createPopupWindow(popupViewSendLater, R.dimen.popup_width_medium);
 
         ImageView btnAdd = popupViewSendLater.findViewById(R.id.btnAdd);
-
         btnAdd.setOnClickListener(v -> addSendLaterItem());
 
-
-        plusPopupWindow.dismiss();
+        // Dismiss the plus popup
+        if (plusPopupWindow != null && plusPopupWindow.isShowing()) {
+            plusPopupWindow.dismiss();
+        }
     }
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == 100 && resultCode == RESULT_OK && data != null) {
+            // Get the selected date from the calendar
+            long dateMillis = data.getLongExtra(CalendarActivity.EXTRA_SELECTED_DATE, -1);
+            if (dateMillis != -1) {
+                Calendar selectedDate = Calendar.getInstance();
+                selectedDate.setTimeInMillis(dateMillis);
 
+                // Update the time result text view in the popup
+                if (createSendLaterPopupWindow != null && createSendLaterPopupWindow.isShowing()) {
+                    View popupView = createSendLaterPopupWindow.getContentView();
+                    TextView tvTimeResult = popupView.findViewById(R.id.tvDateResult);
+
+                    // Format the date for display
+                    SimpleDateFormat dateFormat = new SimpleDateFormat("EEE, d MMM yyyy", Locale.getDefault());
+                    String formattedDate = dateFormat.format(selectedDate.getTime());
+
+                    tvTimeResult.setText(formattedDate);
+                }
+            }
+        }
+    }
     private void addSendLaterItem() {
-        // Inflate the item layout
-        View itemView = LayoutInflater.from(this).inflate(R.layout.popup_create_send_later, null);
-        PopupWindow popupWindow = createPopupWindow(itemView, R.dimen.popup_width);
+        // Before showing the new popup, make sure to dismiss the first one
+        if (sendLaterPopupWindow != null && sendLaterPopupWindow.isShowing()) {
+            sendLaterPopupWindow.dismiss();
+        }
 
-        // Get references to views
-//        EditText editTime = itemView.findViewById(R.id.editTime);
-//        AppCompatButton btnDelete = itemView.findViewById(R.id.btnDelete);
-//
-//        // Set click listener for delete button
-//        btnDelete.setOnClickListener(v -> {
-//            LinearLayout parentLayout = (LinearLayout) itemView.getParent();
-//            parentLayout.removeView(itemView);
-//        });
-//
-//        // Add the new item to the popup window's layout
-//        LinearLayout sendLaterList = findViewById(R.id.sendLaterList);
-//        sendLaterList.addView(itemView);
+        // Inflate the create send later popup
+        View popupCreateSendLater = getLayoutInflater().inflate(R.layout.popup_create_send_later, null);
+
+        // Create popup window using the helper method
+        createSendLaterPopupWindow = createPopupWindow(popupCreateSendLater, R.dimen.popup_width);
+
+        // Get references to views in the popup
+        EditText etMessage = popupCreateSendLater.findViewById(R.id.etMessage);
+        EditText etHour = popupCreateSendLater.findViewById(R.id.etHour);
+        EditText etMinute = popupCreateSendLater.findViewById(R.id.etMinute);
+        TextView tvTimeResult = popupCreateSendLater.findViewById(R.id.tvDateResult);
+        ImageButton btnCalendar = popupCreateSendLater.findViewById(R.id.btnCalendar);
+        AppCompatButton btnCreate = popupCreateSendLater.findViewById(R.id.btnCreate);
+        AppCompatButton btnCancel = popupCreateSendLater.findViewById(R.id.btnCancel);
+
+        // Set click listener for cancel button
+        btnCancel.setOnClickListener(v -> {
+            createSendLaterPopupWindow.dismiss();
+            // Show the send later popup again
+            showSendLaterPopup();
+        });
+
+        // Set click listener for create button
+        btnCreate.setOnClickListener(v -> {
+            String message = etMessage.getText().toString().trim();
+            String hour = etHour.getText().toString().trim();
+            String minute = etMinute.getText().toString().trim();
+
+            if (message.isEmpty() || hour.isEmpty() || minute.isEmpty()) {
+                Toast.makeText(ChatActivity.this, "Please fill in all fields", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            // TODO: Add logic to schedule the message
+            Toast.makeText(ChatActivity.this, "Message scheduled", Toast.LENGTH_SHORT).show();
+            createSendLaterPopupWindow.dismiss();
+            // Show the send later popup again
+            showSendLaterPopup();
+        });
+
+        // Set up calendar button
+        // Set up calendar button
+        btnCalendar.setOnClickListener(v -> {
+            showCalendarDialog();
+        });
     }
+
+    private void showCalendarDialog() {
+        // Create calendar dialog using AlertDialog
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        View calendarView = getLayoutInflater().inflate(R.layout.date_picker_dialog, null);
+        builder.setView(calendarView);
+
+        AlertDialog calendarDialog = builder.create();
+        calendarDialog.show();
+
+        // Get all required views from the dialog layout
+        GridView calendarGridView = calendarView.findViewById(R.id.calendarGridView);
+        TextView tvYear = calendarView.findViewById(R.id.tvYear);
+        TextView tvSelectedDate = calendarView.findViewById(R.id.tvSelectedDate);
+        TextView tvCurrentMonth = calendarView.findViewById(R.id.tvCurrentMonth);
+        ImageButton btnPreviousMonth = calendarView.findViewById(R.id.btnPreviousMonth);
+        ImageButton btnNextMonth = calendarView.findViewById(R.id.btnNextMonth);
+        Button btnCancel = calendarView.findViewById(R.id.btnCancel);
+        Button btnOk = calendarView.findViewById(R.id.btnOk);
+
+        // Initialize today's date for comparison
+        Calendar today = Calendar.getInstance();
+        today.set(Calendar.HOUR_OF_DAY, 0);
+        today.set(Calendar.MINUTE, 0);
+        today.set(Calendar.SECOND, 0);
+        today.set(Calendar.MILLISECOND, 0);
+
+        // Initialize the calendar with today's date
+        Calendar selectedDate = Calendar.getInstance();
+        CalendarAdapter calendarAdapter = new CalendarAdapter(this, selectedDate);
+        calendarGridView.setAdapter(calendarAdapter);
+
+        // Update header texts
+        SimpleDateFormat headerDateFormat = new SimpleDateFormat("EEE, d MMM", Locale.getDefault());
+        SimpleDateFormat yearFormat = new SimpleDateFormat("yyyy", Locale.getDefault());
+        SimpleDateFormat monthYearFormat = new SimpleDateFormat("MMMM yyyy", Locale.getDefault());
+
+        tvYear.setText(yearFormat.format(selectedDate.getTime()));
+        tvCurrentMonth.setText(monthYearFormat.format(calendarAdapter.getCurrentCalendar().getTime()));
+        tvSelectedDate.setText(headerDateFormat.format(selectedDate.getTime()));
+
+        // Set up listeners
+        calendarGridView.setOnItemClickListener((parent, view, position, id) -> {
+            Date date = (Date) calendarAdapter.getItem(position);
+            Calendar cal = Calendar.getInstance();
+            cal.setTime(date);
+
+            // Reset time part for proper comparison
+            cal.set(Calendar.HOUR_OF_DAY, 0);
+            cal.set(Calendar.MINUTE, 0);
+            cal.set(Calendar.SECOND, 0);
+            cal.set(Calendar.MILLISECOND, 0);
+
+            // Check if date is in the past
+            if (cal.before(today)) {
+                Toast.makeText(ChatActivity.this, "Cannot select dates in the past", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            // If clicked on a day from prev/next month, switch to that month
+            if (cal.get(Calendar.MONTH) != calendarAdapter.getCurrentCalendar().get(Calendar.MONTH)) {
+                calendarAdapter.setCurrentMonth(cal);
+                tvCurrentMonth.setText(monthYearFormat.format(calendarAdapter.getCurrentCalendar().getTime()));
+            }
+
+            selectedDate.setTime(date);
+            calendarAdapter.setSelectedDate(position);
+            tvYear.setText(yearFormat.format(selectedDate.getTime()));
+            tvSelectedDate.setText(headerDateFormat.format(selectedDate.getTime()));
+        });
+
+        btnPreviousMonth.setOnClickListener(v -> {
+            // Check if previous month is before current month
+            Calendar prevMonth = (Calendar) calendarAdapter.getCurrentCalendar().clone();
+            prevMonth.add(Calendar.MONTH, -1);
+
+            // Allow going to previous month only if it's not before current month
+            if (prevMonth.get(Calendar.YEAR) > today.get(Calendar.YEAR) ||
+                    (prevMonth.get(Calendar.YEAR) == today.get(Calendar.YEAR) &&
+                            prevMonth.get(Calendar.MONTH) >= today.get(Calendar.MONTH))) {
+                calendarAdapter.previousMonth();
+                tvCurrentMonth.setText(monthYearFormat.format(calendarAdapter.getCurrentCalendar().getTime()));
+            } else {
+                Toast.makeText(ChatActivity.this, "Cannot navigate to past months", Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        btnNextMonth.setOnClickListener(v -> {
+            calendarAdapter.nextMonth();
+            tvCurrentMonth.setText(monthYearFormat.format(calendarAdapter.getCurrentCalendar().getTime()));
+        });
+
+        btnCancel.setOnClickListener(v -> calendarDialog.dismiss());
+
+        btnOk.setOnClickListener(v -> {
+            // Check if a date is selected and not in the past
+            if (calendarAdapter.getSelectedDate() != null) {
+                Calendar selectedCal = Calendar.getInstance();
+                selectedCal.setTime(calendarAdapter.getSelectedDate());
+                selectedCal.set(Calendar.HOUR_OF_DAY, 0);
+                selectedCal.set(Calendar.MINUTE, 0);
+                selectedCal.set(Calendar.SECOND, 0);
+                selectedCal.set(Calendar.MILLISECOND, 0);
+
+                if (selectedCal.before(today)) {
+                    Toast.makeText(ChatActivity.this, "Cannot select dates in the past", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
+                // Format the date for display
+                SimpleDateFormat dateFormat = new SimpleDateFormat("EEE, d MMM yyyy", Locale.getDefault());
+                String formattedDate = dateFormat.format(selectedDate.getTime());
+
+                // Update the time result text view in the popup
+                if (createSendLaterPopupWindow != null && createSendLaterPopupWindow.isShowing()) {
+                    View popupView = createSendLaterPopupWindow.getContentView();
+                    TextView tvTimeResult = popupView.findViewById(R.id.tvDateResult);
+                    tvTimeResult.setText(formattedDate);
+                }
+
+                calendarDialog.dismiss();
+            } else {
+                Toast.makeText(ChatActivity.this, "Please select a date", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
     @Override
     protected void onDestroy() {
         super.onDestroy();
@@ -520,6 +715,12 @@ public class ChatActivity extends AppCompatActivity {
         }
         if (menuPopupWindow != null && menuPopupWindow.isShowing()) {
             menuPopupWindow.dismiss();
+        }
+        if (sendLaterPopupWindow != null && sendLaterPopupWindow.isShowing()) {
+            sendLaterPopupWindow.dismiss();
+        }
+        if (createSendLaterPopupWindow != null && createSendLaterPopupWindow.isShowing()) {
+            createSendLaterPopupWindow.dismiss();
         }
     }
 }

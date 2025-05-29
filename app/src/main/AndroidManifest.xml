@@ -54,6 +54,10 @@
             android:exported="true">
 
         </activity>
+        <activity
+            android:name=".ui.view.CalendarActivity"
+            android:exported="true">
+        </activity>
     </application>
 
 </manifest>
