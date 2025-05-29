@@ -8,6 +8,7 @@ import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.PopupWindow;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -15,6 +16,7 @@ import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.AppCompatButton;
 import androidx.cardview.widget.CardView;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -426,7 +428,7 @@ public class ChatActivity extends AppCompatActivity {
 
         // Set click listeners for popup items
         View cameraLayout = popupView.findViewById(R.id.cameraLayout);
-        View locationLayout = popupView.findViewById(R.id.timeLayout);
+        View sendLaterLayout = popupView.findViewById(R.id.timeLayout);
 
         cameraLayout.setOnClickListener(v -> {
             // Handle camera action
@@ -434,11 +436,7 @@ public class ChatActivity extends AppCompatActivity {
             plusPopupWindow.dismiss();
         });
 
-        locationLayout.setOnClickListener(v -> {
-            // Handle location action
-            Toast.makeText(ChatActivity.this, "Send location clicked", Toast.LENGTH_SHORT).show();
-            plusPopupWindow.dismiss();
-        });
+        sendLaterLayout.setOnClickListener(v -> showSendLaterPopup());
 
         // Calculate position - this fixes the position issue for the plus popup
         int[] location = new int[2];
@@ -453,7 +451,66 @@ public class ChatActivity extends AppCompatActivity {
                 location[0], location[1] - popupHeight);
     }
 
+    private PopupWindow createPopupWindow(View popupView, int widthDimensionId) {
+        // Create popup window with fixed width
+        int width = (int) getResources().getDimension(widthDimensionId);
+        int height = LinearLayout.LayoutParams.WRAP_CONTENT;
+        boolean focusable = true;
 
+        final PopupWindow popupWindow = new PopupWindow(popupView, width, height, focusable);
+
+        // Set background and elevation
+        popupWindow.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+        popupWindow.setElevation(10);
+
+        // Show popup centered in screen
+        popupWindow.showAtLocation(findViewById(android.R.id.content), Gravity.CENTER, 0, 0);
+
+        // Dim the background
+        WindowManager.LayoutParams params = getWindow().getAttributes();
+        params.alpha = 0.8f;
+        getWindow().setAttributes(params);
+
+        // Restore background alpha when popup is dismissed
+        popupWindow.setOnDismissListener(() -> {
+            params.alpha = 1f;
+            getWindow().setAttributes(params);
+        });
+
+        return popupWindow;
+    }
+
+    private void showSendLaterPopup() {
+        View popupViewSendLater = getLayoutInflater().inflate(R.layout.popup_send_later, null);
+        PopupWindow popupWindow = createPopupWindow(popupViewSendLater, R.dimen.popup_width_medium);
+
+        ImageView btnAdd = popupViewSendLater.findViewById(R.id.btnAdd);
+
+        btnAdd.setOnClickListener(v -> addSendLaterItem());
+
+
+        plusPopupWindow.dismiss();
+    }
+
+    private void addSendLaterItem() {
+        // Inflate the item layout
+        View itemView = LayoutInflater.from(this).inflate(R.layout.popup_create_send_later, null);
+        PopupWindow popupWindow = createPopupWindow(itemView, R.dimen.popup_width);
+
+        // Get references to views
+//        EditText editTime = itemView.findViewById(R.id.editTime);
+//        AppCompatButton btnDelete = itemView.findViewById(R.id.btnDelete);
+//
+//        // Set click listener for delete button
+//        btnDelete.setOnClickListener(v -> {
+//            LinearLayout parentLayout = (LinearLayout) itemView.getParent();
+//            parentLayout.removeView(itemView);
+//        });
+//
+//        // Add the new item to the popup window's layout
+//        LinearLayout sendLaterList = findViewById(R.id.sendLaterList);
+//        sendLaterList.addView(itemView);
+    }
     @Override
     protected void onDestroy() {
         super.onDestroy();

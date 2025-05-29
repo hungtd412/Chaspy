@@ -77,10 +77,7 @@
         "sender_id": "jveRWKkaEVcbdiQuw9MsF4Rfobm2",
         "message_content": "Hello, how are you?",
         "message_type": "text",
-        "timestamp": "1747087462000",
-        "attachments": {
-          "pN8V1sW7q3XbL6yJzD9cG2R0F5aK4Tq": true
-        }
+        "timestamp": "1747087462000"
       },
       "ZpL9aQ8v6T3xD8rM0uV1sF5w2T3cX9Wv": {
         "sender_id": "aU8cY9p37Sg5FbJjtf6s82JFn4l8",
@@ -106,12 +103,13 @@
       }
     }
   },
-  "attachments": {
+  "schedule_messages": {
     "pN8V1sW7q3XbL6yJzD9cG2R0F5aK4Tq": {
-      "file_url": "https://example.com/file.jpg",
-      "thumb_url": "https://example.com/thumb.jpg",
-      "created_at": "1627318000000",
-      "updated_at": "1627319000000"
+      "sender_id": "RmsYxP2v9vb2KBgdMQm6P6z5nR83",
+      "receiver_id": "knSSoOecJIfwphK6tjKbU0beHww2",
+      "sending_time": "1748473260000",
+      "message_content": "Scheduled message content",
+      "status": "waiting"
     }
   },
   "general_information": {

@@ -60,6 +60,7 @@
         android:id="@+id/recyclerViewScheduled"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:minHeight="400dp"
         android:maxHeight="400dp"
         android:paddingHorizontal="8dp"
         android:paddingVertical="8dp"

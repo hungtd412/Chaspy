@@ -111,7 +111,7 @@
 
                 <ImageView
                     android:layout_width="24dp"
-                    android:layout_height="24dp"
+                    android:layout_height="21dp"
                     android:layout_gravity="center"
                     android:src="@drawable/ic_add" />
             </androidx.cardview.widget.CardView>
