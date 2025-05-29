@@ -34,7 +34,7 @@
             android:layout_weight="1"
             android:text="Change"
             android:textAllCaps="false"
-            android:background="@drawable/rounded_button_background"
+            android:background="@drawable/button_background"
             android:layout_marginEnd="8dp" />
 
         <Button

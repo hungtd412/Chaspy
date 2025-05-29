@@ -1,11 +1,13 @@
 package com.example.chaspy.ui.view;
 
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
@@ -40,6 +42,7 @@ public class SignInActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_sign_in);
+        setupForgotPasswordListener();
 
         // Initialize ViewModel
         signInViewModel = new ViewModelProvider(this).get(SignInViewModel.class);
@@ -261,6 +264,63 @@ public class SignInActivity extends AppCompatActivity {
         });
     }
 
+    private void setupForgotPasswordListener() {
+        TextView tvForgotPassword = findViewById(R.id.tv_forgot_password);
+        tvForgotPassword.setOnClickListener(v -> showForgotPasswordPopup());
+    }
+    private void showForgotPasswordPopup() {
+        try {
+            // Inflate the popup layout
+            View popupView = getLayoutInflater().inflate(R.layout.popup_forgot_password, null);
+
+            // Create the popup window with exact dimensions from the layout file
+            int width = getResources().getDimensionPixelSize(R.dimen.popup_width);
+
+            PopupWindow popupWindow = new PopupWindow(
+                    popupView,
+                    width,  // Use fixed width of 300dp
+                    ViewGroup.LayoutParams.WRAP_CONTENT,
+                    true
+            );
+
+            // Set elevation for shadow
+            popupWindow.setElevation(10f);
+
+            // Find views in the popup
+            TextView tvCancel = popupView.findViewById(R.id.tv_cancel);
+
+            // Handle cancel button click
+            tvCancel.setOnClickListener(v -> popupWindow.dismiss());
+
+            // Make the popup focusable to get key events
+            popupWindow.setFocusable(true);
+
+            // Set background to handle outside touches
+            popupWindow.setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(android.graphics.Color.TRANSPARENT));
+
+            // Show the popup centered in the screen
+            View rootView = findViewById(android.R.id.content);
+            popupWindow.showAtLocation(rootView, Gravity.CENTER, 0, 0);
+
+            // Try to dim the background - in a safer way
+            try {
+                View container = (View) popupWindow.getContentView().getParent();
+                if (container != null) {
+                    WindowManager wm = (WindowManager) getSystemService(Context.WINDOW_SERVICE);
+                    WindowManager.LayoutParams params = (WindowManager.LayoutParams) container.getLayoutParams();
+                    params.flags |= WindowManager.LayoutParams.FLAG_DIM_BEHIND;
+                    params.dimAmount = 0.5f;
+                    wm.updateViewLayout(container, params);
+                }
+            } catch (Exception e) {
+                // Just log the error but don't crash
+                e.printStackTrace();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            Toast.makeText(this, "Error showing popup", Toast.LENGTH_SHORT).show();
+        }
+    }
     private void showEmailVerificationDialog() {
         View dialogView = getLayoutInflater().inflate(R.layout.dialog_email_verification, null);
         TextView tvMessage = dialogView.findViewById(R.id.tv_verification_message);
