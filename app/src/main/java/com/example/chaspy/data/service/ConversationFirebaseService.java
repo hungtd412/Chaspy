@@ -40,6 +40,7 @@ public class ConversationFirebaseService {
                         String conversationId = conversationSnapshot.getKey();
                         String lastMessage = conversationSnapshot.child("last_message").getValue(String.class);
                         String lastMessageTime = conversationSnapshot.child("last_message_time").getValue(String.class);
+                        String themeColor = conversationSnapshot.child("theme_color").getValue(String.class);
                         
                         // Skip conversations with null or empty last messages
                         if (lastMessage == null || lastMessage.trim().isEmpty()) {
@@ -62,7 +63,8 @@ public class ConversationFirebaseService {
                                             lastMessageTime,
                                             friendId,
                                             "", // Temporary empty friend username
-                                            "" // Temporary empty profile pic URL
+                                            "", // Temporary empty profile pic URL
+                                            themeColor // Theme color from Firebase
                                     );
                                     
                                     conversations.add(conversation);
@@ -130,6 +132,7 @@ public class ConversationFirebaseService {
                     String user2Id = conversationSnapshot.child("user2_id").getValue(String.class);
                     String lastMessage = conversationSnapshot.child("last_message").getValue(String.class);
                     String lastMessageTime = conversationSnapshot.child("last_message_time").getValue(String.class);
+                    String themeColor = conversationSnapshot.child("theme_color").getValue(String.class);
                     
                     // Skip conversations with null or empty last messages
                     if (lastMessage == null || lastMessage.trim().isEmpty()) {
@@ -152,7 +155,8 @@ public class ConversationFirebaseService {
                                         lastMessageTime,
                                         friendId,
                                         "",
-                                        ""
+                                        "",
+                                        themeColor // Include theme color
                                 );
                                 
                                 // Get friend details
@@ -244,3 +248,4 @@ public class ConversationFirebaseService {
         void onResult(boolean areFriends);
     }
 }
+

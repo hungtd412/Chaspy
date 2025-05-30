@@ -53,18 +53,21 @@
   },
   "conversations": {
     "a1Xk2z3b4C5D6E7Fg8H9i10J11K12L13M14": {
+      "theme_color": "#FF5733",
       "last_message": "Hello, how are you?",
       "last_message_time": "1747087462000",
       "user1_id": "jveRWKkaEVcbdiQuw9MsF4Rfobm2",
       "user2_id": "aU8cY9p37Sg5FbJjtf6s82JFn4l8"
     },
     "b2Yk3z4C5D6E7F8G9H10i11J12K13L14M15": {
+      "theme_color": "#FF5734",
       "last_message": "Let's meet up later.",
       "last_message_time": "1747024342000",
       "user1_id": "jveRWKkaEVcbdiQuw9MsF4Rfobm2",
       "user2_id": "knSSoOecJIfwphK6tjKbU0beHww2"
     },
     "c3B4D5E6F7G8H9i10J11K12L13M14N15O16": {
+      "theme_color": "#FF5734",
       "last_message": "I'll send you the details soon.",
       "last_message_time": "1627331000000",
       "user1_id": "aU8cY9p37Sg5FbJjtf6s82JFn4l8",
