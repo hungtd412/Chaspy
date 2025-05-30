@@ -481,8 +481,6 @@ public class ChatActivity extends AppCompatActivity {
             messageAdapter.setThemeColor(selectedColorHex);
             messageAdapter.notifyDataSetChanged();
         }
-
-        Toast.makeText(this, "Theme updated", Toast.LENGTH_SHORT).show();
     }
 
     private void showPlusPopup(View anchorView) {

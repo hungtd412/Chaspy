@@ -3,6 +3,7 @@ package com.example.chaspy.ui.view;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -24,13 +25,17 @@ import androidx.lifecycle.ViewModelProvider;
 
 import com.example.chaspy.R;
 import com.example.chaspy.data.manager.SharedPreferencesManager.AccountItem;
+import com.example.chaspy.ui.viewmodel.SettingViewModel;
 import com.example.chaspy.ui.viewmodel.SignInViewModel;
+import com.google.firebase.auth.FirebaseUser;
 
 import java.util.List;
 
 public class SignInActivity extends AppCompatActivity {
 
     private EditText etEmail, etPassword;
+    private SettingViewModel viewModel;
+
     private Button btnLogin;
     private TextView tvSignUp;
     private CheckBox cbRememberAccount;
@@ -45,6 +50,9 @@ public class SignInActivity extends AppCompatActivity {
 
         // Initialize ViewModel
         signInViewModel = new ViewModelProvider(this).get(SignInViewModel.class);
+
+        // Initialize ViewModel
+        viewModel = new ViewModelProvider(this).get(SettingViewModel.class);
 
         // Link UI with variables
         etEmail = findViewById(R.id.et_email);
@@ -287,6 +295,15 @@ public class SignInActivity extends AppCompatActivity {
 
             // Find views in the popup
             TextView tvCancel = popupView.findViewById(R.id.tv_cancel);
+            Button btn_verify_email = popupView.findViewById(R.id.btn_verify_email);
+
+            EditText etEmail = popupView.findViewById(R.id.et_email);
+
+            btn_verify_email.setOnClickListener(v -> {
+                // Handle email verification
+                handleForgotPassword(etEmail.getText().toString().trim(), popupWindow);
+                popupWindow.dismiss();
+            });
 
             // Handle cancel button click
             tvCancel.setOnClickListener(v -> popupWindow.dismiss());
@@ -354,5 +371,21 @@ public class SignInActivity extends AppCompatActivity {
                 dialog.dismiss();
             }
         });
+    }
+
+    private void handleForgotPassword(String etEmail, PopupWindow popupWindow) {
+        viewModel.sendPasswordResetEmail(etEmail)
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        Toast.makeText(this,
+                                "Password reset email sent to " + etEmail,
+                                Toast.LENGTH_SHORT).show();
+                        popupWindow.dismiss();
+                    } else {
+                        Toast.makeText(this,
+                                "Failed to send reset email",
+                                Toast.LENGTH_SHORT).show();
+                    }
+                });
     }
 }

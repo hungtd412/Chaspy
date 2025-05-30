@@ -22,7 +22,8 @@ import com.google.firebase.database.ValueEventListener;
 
 public class SettingViewModel extends ViewModel {
     private static final String TAG = "SettingViewModel";
-    
+
+
     private final UserRepository userRepository;
     private final FirebaseAuth firebaseAuth;
     private final DatabaseReference usersRef;
@@ -140,6 +141,7 @@ public class SettingViewModel extends ViewModel {
     }
     
     public Task<Void> sendPasswordResetEmail(String email) {
+        System.out.println("Sending password reset email to: " + email);
         return userRepository.sendPasswordResetEmail(email);
     }
     
