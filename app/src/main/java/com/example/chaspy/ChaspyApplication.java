@@ -8,16 +8,9 @@ import android.os.Looper;
 
 import androidx.multidex.MultiDex;
 import androidx.work.Configuration;
-import androidx.work.Constraints;
-import androidx.work.ExistingPeriodicWorkPolicy;
-import androidx.work.NetworkType;
-import androidx.work.PeriodicWorkRequest;
-import androidx.work.WorkManager;
+import java.util.concurrent.Executors;
 
 import com.example.chaspy.service.ScheduledMessageManager;
-import com.example.chaspy.service.ScheduledMessageWorker;
-
-import java.util.concurrent.TimeUnit;
 
 public class ChaspyApplication extends Application implements Configuration.Provider {
     private static final String TAG = "ChaspyApplication";
@@ -39,16 +32,15 @@ public class ChaspyApplication extends Application implements Configuration.Prov
         super.onCreate();
         try {
             // Initialize WorkManager with our custom configuration
-            WorkManager.initialize(
-                this,
-                getWorkManagerConfiguration()
-            );
+            // This does not block the UI thread
             
-            // Start the scheduled message service with 1-second frequency
+            // Start the scheduled message service with 3-second frequency
+            // This method is designed to not block the UI thread
             ScheduledMessageManager.startScheduledMessageWorker(this);
-            Log.i(TAG, "Initialized second-by-second message scheduler");
+            Log.i(TAG, "Initialized scheduled message scheduler");
             
             // Schedule additional periodic checks for better reliability
+            // These use Handler.postDelayed which is non-blocking
             scheduleAdditionalChecks();
             
         } catch (Exception e) {
@@ -57,7 +49,7 @@ public class ChaspyApplication extends Application implements Configuration.Prov
     }
     
     private void scheduleAdditionalChecks() {
-        // Schedule additional checks at specific intervals
+        // Schedule additional checks at specific intervals using non-blocking Handler.postDelayed
         // These provide redundancy in case the second-level checker is killed
         for (int seconds : new int[]{30, 60, 300}) {
             final int delay = seconds;
@@ -73,6 +65,14 @@ public class ChaspyApplication extends Application implements Configuration.Prov
         return new Configuration.Builder()
                 .setMinimumLoggingLevel(android.util.Log.INFO)
                 .setJobSchedulerJobIdRange(1000, 2000) // Provide a specific range for job IDs
+                .setExecutor(Executors.newFixedThreadPool(2)) // Explicitly provide executor
                 .build();
+    }
+    
+    @Override
+    public void onTerminate() {
+        super.onTerminate();
+        // Clean up resources
+        ScheduledMessageManager.shutdown();
     }
 }
