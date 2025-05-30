@@ -8,6 +8,8 @@ import com.example.chaspy.data.model.Message;
 import com.example.chaspy.data.model.ScheduleMessage;
 import com.example.chaspy.data.repository.ChatRepository;
 import com.example.chaspy.data.repository.ScheduleMessageRepository;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 
 import java.util.HashMap;
 import java.util.List;
@@ -221,6 +223,22 @@ public class ChatViewModel extends ViewModel {
             }
         });
     }
+
+    public void updateThemeColor(String conversationId, String themeColor) {
+        FirebaseDatabase database = FirebaseDatabase.getInstance();
+        DatabaseReference conversationRef = database.getReference("conversations").child(conversationId);
+
+        Map<String, Object> updates = new HashMap<>();
+        updates.put("theme_color", themeColor);
+
+        conversationRef.updateChildren(updates)
+                .addOnSuccessListener(aVoid -> {
+                    // Success, nothing to do
+                })
+                .addOnFailureListener(e -> {
+                    errorMessage.setValue("Failed to update theme color: " + e.getMessage());
+                });
+    }
     
     @Override
     protected void onCleared() {
@@ -230,3 +248,4 @@ public class ChatViewModel extends ViewModel {
         messageMap.clear();
     }
 }
+

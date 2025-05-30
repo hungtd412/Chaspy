@@ -85,6 +85,12 @@ public class ChatActivity extends AppCompatActivity {
         friendProfilePicUrl = getIntent().getStringExtra("friendProfilePicUrl");
         friendId = getIntent().getStringExtra("friendId");
 
+        // Get theme color from intent, use default if not provided
+        String themeColor = getIntent().getStringExtra("themeColor");
+        if (themeColor != null && !themeColor.isEmpty()) {
+            selectedColorHex = themeColor;
+        }
+
         // Log the received data for debugging
         if (conversationId == null || friendUsername == null || friendId == null) {
             Toast.makeText(this, "Missing conversation information", Toast.LENGTH_SHORT).show();
@@ -111,6 +117,9 @@ public class ChatActivity extends AppCompatActivity {
 
         // Setup UI with friend information
         setupUserInterface();
+
+        // Apply theme color immediately
+        applySelectedTheme();
 
         // Initialize popup button clicks
         setupPopupButtons();
@@ -340,13 +349,17 @@ public class ChatActivity extends AppCompatActivity {
         Button btnChange = popupView.findViewById(R.id.btnChange);
         Button btnCancel = popupView.findViewById(R.id.btnCancel);
 
-        // Set up color selectors
+        // Set up color selectors with current theme color
         setupColorSelectors(popupView);
 
         // Set click listeners
         btnChange.setOnClickListener(v -> {
             // Apply selected theme
             applySelectedTheme();
+
+            // Update theme color in Firebase
+            chatViewModel.updateThemeColor(conversationId, selectedColorHex);
+
             popupWindow.dismiss();
         });
 
@@ -370,9 +383,43 @@ public class ChatActivity extends AppCompatActivity {
         View selectorCoral = popupView.findViewById(R.id.selectorCoral);
         View selectorLavender = popupView.findViewById(R.id.selectorLavender);
 
-        // Default selection
-        selectorLightBlue.setVisibility(View.VISIBLE);
-        currentSelectedSelector = selectorLightBlue;
+        // Hide all selectors initially
+        selectorLightBlue.setVisibility(View.INVISIBLE);
+        selectorBlue.setVisibility(View.INVISIBLE);
+        selectorGreen.setVisibility(View.INVISIBLE);
+        selectorPink.setVisibility(View.INVISIBLE);
+        selectorCoral.setVisibility(View.INVISIBLE);
+        selectorLavender.setVisibility(View.INVISIBLE);
+
+        // Set initial selection based on current theme color
+        View selectedSelector = null;
+        switch (selectedColorHex) {
+            case "#A9E7FD":
+                selectedSelector = selectorLightBlue;
+                break;
+            case "#90CAF9":
+                selectedSelector = selectorBlue;
+                break;
+            case "#A5D6A7":
+                selectedSelector = selectorGreen;
+                break;
+            case "#F8BBD0":
+                selectedSelector = selectorPink;
+                break;
+            case "#FF9E9E":
+                selectedSelector = selectorCoral;
+                break;
+            case "#E1BEE7":
+                selectedSelector = selectorLavender;
+                break;
+            default:
+                // If color doesn't match any of the predefined colors, default to light blue
+                selectedSelector = selectorLightBlue;
+                selectedColorHex = "#A9E7FD";
+                break;
+        }
+        selectedSelector.setVisibility(View.VISIBLE);
+        currentSelectedSelector = selectedSelector;
 
         // Set click listeners for each color
         colorLightBlue.setOnClickListener(v -> {

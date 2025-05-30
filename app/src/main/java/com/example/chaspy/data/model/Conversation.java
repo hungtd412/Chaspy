@@ -7,6 +7,7 @@ public class Conversation {
     private String friendId;
     private String friendUsername;
     private String profilePicUrl;
+    private String themeColor;
 
     public Conversation() {
         // Empty constructor needed for Firebase
@@ -19,6 +20,16 @@ public class Conversation {
         this.friendId = friendId;
         this.friendUsername = friendUsername;
         this.profilePicUrl = profilePicUrl;
+    }
+
+    public Conversation(String conversationId, String lastMessage, String lastMessageTime, String friendId, String friendUsername, String profilePicUrl, String themeColor) {
+        this.conversationId = conversationId;
+        this.lastMessage = lastMessage;
+        this.lastMessageTime = lastMessageTime;
+        this.friendId = friendId;
+        this.friendUsername = friendUsername;
+        this.profilePicUrl = profilePicUrl;
+        this.themeColor = themeColor;
     }
 
     public String getConversationId() {
@@ -67,5 +78,13 @@ public class Conversation {
 
     public void setProfilePicUrl(String profilePicUrl) {
         this.profilePicUrl = profilePicUrl;
+    }
+
+    public String getThemeColor() {
+        return themeColor;
+    }
+
+    public void setThemeColor(String themeColor) {
+        this.themeColor = themeColor;
     }
 }

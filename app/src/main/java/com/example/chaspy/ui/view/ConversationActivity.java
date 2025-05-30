@@ -69,12 +69,13 @@ public class ConversationActivity extends AppCompatActivity {
         adapter = new ConversationAdapter(new ConversationAdapter.OnItemClickListener() {
             @Override
             public void onItemClick(Conversation conversation) {
-                // Start ChatActivity with conversation data
+                // Start ChatActivity with conversation data including theme color
                 Intent intent = new Intent(ConversationActivity.this, ChatActivity.class);
                 intent.putExtra("conversationId", conversation.getConversationId());
                 intent.putExtra("friendUsername", conversation.getFriendUsername());
                 intent.putExtra("friendProfilePicUrl", conversation.getProfilePicUrl());
                 intent.putExtra("friendId", conversation.getFriendId());
+                intent.putExtra("themeColor", conversation.getThemeColor());
                 startActivity(intent);
             }
         });
