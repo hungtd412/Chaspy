@@ -53,7 +53,7 @@
         <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/btnAddFriend"
             android:layout_width="wrap_content"
-            android:layout_height="36dp"
+            android:layout_height="45dp"
             android:backgroundTint="#5D9CEC"
             android:text="Add"
             android:textColor="#FFFFFF"

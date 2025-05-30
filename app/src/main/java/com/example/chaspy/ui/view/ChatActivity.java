@@ -377,7 +377,7 @@ public class ChatActivity extends AppCompatActivity {
         // Set click listeners for each color
         colorLightBlue.setOnClickListener(v -> {
             updateColorSelection(selectorLightBlue);
-            selectedColorHex = "#CCEEFF";
+            selectedColorHex = "#A9E7FD";
         });
 
         colorBlue.setOnClickListener(v -> {
@@ -418,20 +418,24 @@ public class ChatActivity extends AppCompatActivity {
     }
 
     private void applySelectedTheme() {
-        // Here you would update the theme in the database
-        // chatViewModel.updateConversationTheme(conversationId, selectedColorHex);
+        // Update the UI colors for header and bottom layouts
+        View headerLayout = findViewById(R.id.headerLayout);
+        View bottomLayout = findViewById(R.id.bottomLayout);
 
-        // For now, just update the UI
-        CardView headerCard = findViewById(R.id.headerCard);
-        CardView bottomCard = findViewById(R.id.bottomCard);
-
-        if (headerCard != null && bottomCard != null) {
-            int color = android.graphics.Color.parseColor(selectedColorHex);
-            headerCard.setCardBackgroundColor(color);
-            bottomCard.setCardBackgroundColor(color);
-
-            Toast.makeText(this, "Theme updated", Toast.LENGTH_SHORT).show();
+        // Try to set background color directly
+        if (headerLayout != null && bottomLayout != null) {
+            int color = Color.parseColor(selectedColorHex);
+            headerLayout.setBackgroundColor(color);
+            bottomLayout.setBackgroundColor(color);
         }
+
+        // Update theme color in the adapter and refresh all messages
+        if (messageAdapter != null) {
+            messageAdapter.setThemeColor(selectedColorHex);
+            messageAdapter.notifyDataSetChanged();
+        }
+
+        Toast.makeText(this, "Theme updated", Toast.LENGTH_SHORT).show();
     }
 
     private void showPlusPopup(View anchorView) {

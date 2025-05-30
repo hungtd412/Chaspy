@@ -34,7 +34,7 @@
                 android:layout_height="60dp"
                 android:layout_gravity="center"
                 android:background="@drawable/circle_shape"
-                android:backgroundTint="#CCEEFF"
+                android:backgroundTint="#A9E7FD"
                 android:clickable="true"
                 android:focusable="true" />
 
