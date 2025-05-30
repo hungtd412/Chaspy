@@ -20,7 +20,6 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.example.chaspy.R;
@@ -31,7 +30,7 @@ import java.util.List;
 
 public class SignInActivity extends AppCompatActivity {
 
-    private EditText etUsername, etPassword;
+    private EditText etEmail, etPassword;
     private Button btnLogin;
     private TextView tvSignUp;
     private CheckBox cbRememberAccount;
@@ -48,7 +47,7 @@ public class SignInActivity extends AppCompatActivity {
         signInViewModel = new ViewModelProvider(this).get(SignInViewModel.class);
 
         // Link UI with variables
-        etUsername = findViewById(R.id.et_username);
+        etEmail = findViewById(R.id.et_email);
         etPassword = findViewById(R.id.et_password);
         btnLogin = findViewById(R.id.btn_login);
         tvSignUp = findViewById(R.id.tv_sign_up);
@@ -69,12 +68,12 @@ public class SignInActivity extends AppCompatActivity {
 
         // Handle login button
         btnLogin.setOnClickListener(view -> {
-            String username = etUsername.getText().toString().trim();
+            String email = etEmail.getText().toString().trim();
             String password = etPassword.getText().toString().trim();
             boolean rememberAccount = cbRememberAccount.isChecked();
 
             // Use ViewModel to handle login
-            signInViewModel.signInUser(username, password, rememberAccount);
+            signInViewModel.signInUser(email, password, rememberAccount);
         });
 
         // Handle navigation to SignUpActivity
@@ -85,18 +84,18 @@ public class SignInActivity extends AppCompatActivity {
 
         // Load saved credentials if available
         if (signInViewModel.isRememberAccount()) {
-            etUsername.setText(signInViewModel.getSavedUsername());
+            etEmail.setText(signInViewModel.getSavedEmail());
             etPassword.setText(signInViewModel.getSavedPassword());
             cbRememberAccount.setChecked(true);
         }
     }
 
     private void setupFieldFocusListeners() {
-        etUsername.setOnFocusChangeListener((v, hasFocus) -> {
+        etEmail.setOnFocusChangeListener((v, hasFocus) -> {
             if (hasFocus) {
                 List<AccountItem> accounts = signInViewModel.getSavedAccountsLiveData().getValue();
                 if (accounts != null && !accounts.isEmpty()) {
-                    showAccountSuggestions(etUsername, accounts);
+                    showAccountSuggestions(etEmail, accounts);
                 }
             } else {
                 dismissAccountSuggestionsPopup();
@@ -106,9 +105,9 @@ public class SignInActivity extends AppCompatActivity {
         etPassword.setOnFocusChangeListener((v, hasFocus) -> {
             if (hasFocus) {
                 // If username is already filled, try to auto-fill password
-                String username = etUsername.getText().toString().trim();
+                String username = etEmail.getText().toString().trim();
                 if (!username.isEmpty()) {
-                    String savedPassword = signInViewModel.getPasswordForUsername(username);
+                    String savedPassword = signInViewModel.getPasswordForEmail(username);
                     if (!savedPassword.isEmpty()) {
                         etPassword.setText(savedPassword);
                     }
@@ -151,11 +150,11 @@ public class SignInActivity extends AppCompatActivity {
             View suggestionItem = inflater.inflate(R.layout.account_suggestion_item, suggestionContainer, false);
             TextView tvUsername = suggestionItem.findViewById(R.id.tv_account_username);
             ImageButton btnDeleteAccount = suggestionItem.findViewById(R.id.btn_delete_account);
-            tvUsername.setText(account.getUsername());
+            tvUsername.setText(account.getEmail());
 
             // Handle normal click - fill the fields
             suggestionItem.setOnClickListener(v -> {
-                etUsername.setText(account.getUsername());
+                etEmail.setText(account.getEmail());
                 etPassword.setText(account.getPassword());
                 cbRememberAccount.setChecked(true);
                 dismissAccountSuggestionsPopup();
@@ -171,7 +170,7 @@ public class SignInActivity extends AppCompatActivity {
             // Handle delete button click
             btnDeleteAccount.setOnClickListener(v -> {
                 // Show confirmation dialog
-                showDeleteAccountConfirmation(account.getUsername());
+                showDeleteAccountConfirmation(account.getEmail());
             });
 
             suggestionContainer.addView(suggestionItem);
@@ -198,8 +197,8 @@ public class SignInActivity extends AppCompatActivity {
                     dismissAccountSuggestionsPopup();
 
                     // Clear the fields if they match the deleted account
-                    if (etUsername.getText().toString().equals(username)) {
-                        etUsername.setText("");
+                    if (etEmail.getText().toString().equals(username)) {
+                        etEmail.setText("");
                         etPassword.setText("");
                         cbRememberAccount.setChecked(false);
                     }
@@ -221,11 +220,11 @@ public class SignInActivity extends AppCompatActivity {
         // Observe changes to saved accounts
         signInViewModel.getSavedAccountsLiveData().observe(this, accounts -> {
             // If username field is not empty, check if its account was just deleted
-            String currentUsername = etUsername.getText().toString();
+            String currentUsername = etEmail.getText().toString();
             if (!currentUsername.isEmpty()) {
                 boolean accountExists = false;
                 for (AccountItem account : accounts) {
-                    if (account.getUsername().equals(currentUsername)) {
+                    if (account.getEmail().equals(currentUsername)) {
                         accountExists = true;
                         break;
                     }
@@ -233,7 +232,7 @@ public class SignInActivity extends AppCompatActivity {
 
                 // Clear fields if account doesn't exist anymore
                 if (!accountExists) {
-                    etUsername.setText("");
+                    etEmail.setText("");
                     etPassword.setText("");
                     cbRememberAccount.setChecked(false);
                 }
