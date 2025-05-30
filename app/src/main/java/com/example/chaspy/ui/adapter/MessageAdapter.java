@@ -1,5 +1,6 @@
 package com.example.chaspy.ui.adapter;
 
+import android.graphics.Color;
 import android.text.format.DateFormat;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -8,6 +9,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.cardview.widget.CardView;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.chaspy.R;
@@ -32,6 +34,7 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
     private Map<String, Integer> messagePositions = new HashMap<>();
     private String currentUserId;
     private String friendProfilePicUrl;
+    private String themeColor = "#A9E7FD";
 
     public MessageAdapter(String currentUserId) {
         this.currentUserId = currentUserId;
@@ -44,6 +47,9 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
 
     public void setFriendProfilePicUrl(String url) {
         this.friendProfilePicUrl = url;
+    }
+    public void setThemeColor(String themeColor) {
+        this.themeColor = themeColor;
     }
 
     @Override
@@ -77,7 +83,8 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
         if (holder.getItemViewType() == VIEW_TYPE_SENT) {
             ((SentMessageViewHolder) holder).bind(message);
         } else {
-            ((ReceivedMessageViewHolder) holder).bind(message, friendProfilePicUrl);
+            ReceivedMessageViewHolder receivedHolder = (ReceivedMessageViewHolder) holder;
+            receivedHolder.bind(message, friendProfilePicUrl, themeColor);
         }
     }
 
@@ -183,15 +190,17 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
         private TextView tvMessage;
         private TextView tvTimestamp;
         private ImageView ivProfilePic;
+        private CardView cardView; // Add this field
 
         public ReceivedMessageViewHolder(@NonNull View itemView) {
             super(itemView);
             tvMessage = itemView.findViewById(R.id.tvMessage);
             tvTimestamp = itemView.findViewById(R.id.tvTimestamp);
             ivProfilePic = itemView.findViewById(R.id.ivProfilePic);
+            cardView = itemView.findViewById(R.id.cardView); // Initialize it here
         }
 
-        void bind(Message message, String profilePicUrl) {
+        void bind(Message message, String profilePicUrl, String themeColor) {
             tvMessage.setText(message.getMessageContent());
 
             // Format and set timestamp
@@ -214,6 +223,11 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
                         .into(ivProfilePic);
             } else {
                 ivProfilePic.setImageResource(R.drawable.default_profile);
+            }
+
+            // Apply theme color to the card
+            if (cardView != null && themeColor != null) {
+                cardView.setCardBackgroundColor(Color.parseColor(themeColor));
             }
         }
     }

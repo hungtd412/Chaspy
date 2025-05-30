@@ -18,7 +18,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="8dp"
-        app:cardBackgroundColor="#C3F1FF"
+        app:cardBackgroundColor="#A9E7FD"
         app:cardCornerRadius="20dp"
         app:layout_constraintStart_toEndOf="@+id/ivProfilePic"
         app:layout_constraintTop_toTopOf="parent">
