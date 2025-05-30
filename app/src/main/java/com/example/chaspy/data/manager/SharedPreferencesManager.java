@@ -8,9 +8,7 @@ import com.google.gson.reflect.TypeToken;
 
 import java.lang.reflect.Type;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 public class SharedPreferencesManager {
     private static final String PREF_NAME = "ChasPyPreferences";
@@ -53,7 +51,7 @@ public class SharedPreferencesManager {
         // Check if the account already exists
         boolean found = false;
         for (int i = 0; i < savedAccounts.size(); i++) {
-            if (savedAccounts.get(i).getUsername().equals(username)) {
+            if (savedAccounts.get(i).getEmail().equals(username)) {
                 // Update existing account with new password
                 savedAccounts.get(i).setPassword(password);
                 found = true;
@@ -86,7 +84,7 @@ public class SharedPreferencesManager {
         List<AccountItem> updatedAccounts = new ArrayList<>();
         
         for (AccountItem account : savedAccounts) {
-            if (!account.getUsername().equals(username)) {
+            if (!account.getEmail().equals(username)) {
                 updatedAccounts.add(account);
             }
         }
@@ -95,7 +93,7 @@ public class SharedPreferencesManager {
         sharedPreferences.edit().putString(KEY_SAVED_ACCOUNTS, json).apply();
         
         // Check if the deleted account is the currently remembered one
-        if (username.equals(getUsername()) && isRememberAccount()) {
+        if (username.equals(getEmail()) && isRememberAccount()) {
             // Clear the remembered credentials
             SharedPreferences.Editor editor = sharedPreferences.edit();
             editor.remove(KEY_USERNAME);
@@ -124,7 +122,7 @@ public class SharedPreferencesManager {
         editor.putBoolean(KEY_REMEMBER_ACCOUNT, remember);
         if (!remember) {
             // Remove the current account from saved accounts
-            String currentUsername = getUsername();
+            String currentUsername = getEmail();
             if (!currentUsername.isEmpty()) {
                 removeFromSavedAccounts(currentUsername);
             }
@@ -141,7 +139,7 @@ public class SharedPreferencesManager {
         return sharedPreferences.getBoolean(KEY_REMEMBER_ACCOUNT, false);
     }
 
-    public String getUsername() {
+    public String getEmail() {
         return sharedPreferences.getString(KEY_USERNAME, "");
     }
 
@@ -169,7 +167,7 @@ public class SharedPreferencesManager {
             this.password = password;
         }
         
-        public String getUsername() {
+        public String getEmail() {
             return username;
         }
         

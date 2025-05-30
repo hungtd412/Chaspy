@@ -25,6 +25,7 @@ import java.util.Locale;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class ScheduledMessageWorker extends Worker {
     private static final String TAG = "ScheduledMessageWorker";
@@ -37,6 +38,8 @@ public class ScheduledMessageWorker extends Worker {
     // Add timeout constants
     private static final int BATCH_TIMEOUT_SECONDS = 10;
     private static final int SINGLE_OPERATION_TIMEOUT_SECONDS = 5;
+    // Add a processing tracker to prevent duplicate sends
+    private static final ConcurrentHashMap<String, AtomicBoolean> processingMessages = new ConcurrentHashMap<>();
 
     public ScheduledMessageWorker(@NonNull Context context, @NonNull WorkerParameters workerParams) {
         super(context, workerParams);
@@ -91,18 +94,37 @@ public class ScheduledMessageWorker extends Worker {
                 CountDownLatch sendLatch = new CountDownLatch(messages.size());
 
                 for (ScheduleMessage message : messages) {
+                    // Check if this message is already being processed
+                    String messageId = message.getId();
+                    AtomicBoolean isProcessing = processingMessages.putIfAbsent(messageId, new AtomicBoolean(true));
+                    
+                    // Skip if already being processed
+                    if (isProcessing != null && isProcessing.get()) {
+                        Log.d(TAG, "Message " + messageId + " is already being processed, skipping");
+                        sendLatch.countDown();
+                        continue;
+                    }
+                    
                     // OPTIMIZATION: Skip deletion and check conversation first
                     // This prevents deleting messages we can't actually send
                     findConversationAndSendMessage(message, new SendCallback() {
                         @Override
                         public void onComplete(boolean isSuccessful) {
-                            if (isSuccessful) {
-                                // Only delete the message AFTER it's been successfully sent
-                                deleteScheduledMessage(message, sendLatch);
-                                Log.d(TAG, "✅ Successfully processed scheduled message: " + message.getId());
-                            } else {
-                                Log.e(TAG, "❌ Failed to send message: " + message.getId());
-                                success[0] = false;
+                            try {
+                                if (isSuccessful) {
+                                    // Only delete the message AFTER it's been successfully sent
+                                    deleteScheduledMessage(message, sendLatch);
+                                    Log.d(TAG, "✅ Successfully processed scheduled message: " + messageId);
+                                } else {
+                                    Log.e(TAG, "❌ Failed to send message: " + messageId);
+                                    // Release the lock on this message so it can be tried again
+                                    processingMessages.remove(messageId);
+                                    success[0] = false;
+                                    sendLatch.countDown();
+                                }
+                            } catch (Exception e) {
+                                Log.e(TAG, "Error in completion callback: " + e.getMessage());
+                                processingMessages.remove(messageId);
                                 sendLatch.countDown();
                             }
                         }
@@ -153,16 +175,21 @@ public class ScheduledMessageWorker extends Worker {
 
     // Separate method for message deletion that counts down the latch
     private void deleteScheduledMessage(ScheduleMessage message, CountDownLatch latch) {
-        repository.deleteScheduledMessage(message.getId(), new ScheduleMessageRepository.ScheduleCallback<Void>() {
+        final String messageId = message.getId();
+        repository.deleteScheduledMessage(messageId, new ScheduleMessageRepository.ScheduleCallback<Void>() {
             @Override
             public void onSuccess(Void result) {
-                Log.d(TAG, "Deleted scheduled message: " + message.getId());
+                Log.d(TAG, "Deleted scheduled message: " + messageId);
+                // Always remove from processing map when complete
+                processingMessages.remove(messageId);
                 latch.countDown();
             }
 
             @Override
             public void onError(String error) {
-                Log.e(TAG, "Failed to delete scheduled message: " + error + ", messageId: " + message.getId());
+                Log.e(TAG, "Failed to delete scheduled message: " + error + ", messageId: " + messageId);
+                // Always remove from processing map when complete
+                processingMessages.remove(messageId);
                 latch.countDown();
             }
         });
@@ -173,22 +200,63 @@ public class ScheduledMessageWorker extends Worker {
         String receiverId = scheduleMessage.getReceiverId();
         String conversationId = scheduleMessage.getConversationId();
         String messageId = scheduleMessage.getId();
+        
+        // Ensure we never process a message twice
+        AtomicBoolean messageProcessed = new AtomicBoolean(false);
 
         // OPTIMIZATION: If we have a conversation ID, verify it quickly and use it directly
         if (conversationId != null && !conversationId.isEmpty()) {
             Log.d(TAG, "Fast path: Using direct conversationId: " + conversationId);
-            sendMessageToConversation(conversationId, senderId, scheduleMessage.getMessageContent(), callback);
+            sendMessageToConversation(conversationId, senderId, scheduleMessage.getMessageContent(), 
+                (success) -> {
+                    // Only complete once
+                    if (messageProcessed.compareAndSet(false, true)) {
+                        callback.onComplete(success);
+                    }
+                });
             return;
         }
 
         // If no conversation ID, we need to search for a matching conversation
         Log.d(TAG, "Searching for conversation between: " + senderId + " and " + receiverId);
         
+        final AtomicBoolean conversationFound = new AtomicBoolean(false);
+        
         // Use more efficient ValueListener
         conversationsRef.orderByChild("user1_id").equalTo(senderId).addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                findMatchingConversation(dataSnapshot, senderId, receiverId, scheduleMessage, callback);
+                boolean found = processConversationSnapshot(dataSnapshot, senderId, receiverId, 
+                                                         scheduleMessage, messageProcessed, callback);
+                conversationFound.set(found);
+                
+                // If not found in this query, try the other way
+                if (!found) {
+                    conversationsRef.orderByChild("user2_id").equalTo(senderId).addListenerForSingleValueEvent(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                            boolean secondFound = processConversationSnapshot(dataSnapshot, senderId, receiverId, 
+                                                                         scheduleMessage, messageProcessed, callback);
+                            
+                            // If still not found after both queries, report failure
+                            if (!secondFound && !messageProcessed.get()) {
+                                Log.e(TAG, "No conversation found between users after both queries: " + 
+                                          senderId + " and " + receiverId);
+                                if (messageProcessed.compareAndSet(false, true)) {
+                                    callback.onComplete(false);
+                                }
+                            }
+                        }
+
+                        @Override
+                        public void onCancelled(@NonNull DatabaseError databaseError) {
+                            Log.e(TAG, "Failed in second query: " + databaseError.getMessage());
+                            if (messageProcessed.compareAndSet(false, true)) {
+                                callback.onComplete(false);
+                            }
+                        }
+                    });
+                }
             }
 
             @Override
@@ -198,13 +266,21 @@ public class ScheduledMessageWorker extends Worker {
                 conversationsRef.orderByChild("user2_id").equalTo(senderId).addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
                     public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                        findMatchingConversation(dataSnapshot, senderId, receiverId, scheduleMessage, callback);
+                        boolean found = processConversationSnapshot(dataSnapshot, senderId, receiverId, 
+                                                                 scheduleMessage, messageProcessed, callback);
+                        if (!found && !messageProcessed.get()) {
+                            if (messageProcessed.compareAndSet(false, true)) {
+                                callback.onComplete(false);
+                            }
+                        }
                     }
 
                     @Override
                     public void onCancelled(@NonNull DatabaseError databaseError) {
                         Log.e(TAG, "Failed to find conversation: " + databaseError.getMessage());
-                        callback.onComplete(false);
+                        if (messageProcessed.compareAndSet(false, true)) {
+                            callback.onComplete(false);
+                        }
                     }
                 });
             }
@@ -212,8 +288,9 @@ public class ScheduledMessageWorker extends Worker {
     }
 
     // Helper method to find matching conversation from query results
-    private void findMatchingConversation(DataSnapshot dataSnapshot, String senderId, String receiverId, 
-                                         ScheduleMessage scheduleMessage, SendCallback callback) {
+    private boolean processConversationSnapshot(DataSnapshot dataSnapshot, String senderId, String receiverId,
+                                          ScheduleMessage scheduleMessage, AtomicBoolean messageProcessed, 
+                                          SendCallback callback) {
         for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
             String user1Id = snapshot.child("user1_id").getValue(String.class);
             String user2Id = snapshot.child("user2_id").getValue(String.class);
@@ -223,14 +300,19 @@ public class ScheduledMessageWorker extends Worker {
                     (user1Id.equals(receiverId) && user2Id.equals(senderId))) {
                     
                     String conversationId = snapshot.getKey();
-                    sendMessageToConversation(conversationId, senderId, scheduleMessage.getMessageContent(), callback);
-                    return;
+                    sendMessageToConversation(conversationId, senderId, scheduleMessage.getMessageContent(), 
+                        (success) -> {
+                            // Only call callback once
+                            if (messageProcessed.compareAndSet(false, true)) {
+                                callback.onComplete(success);
+                            }
+                        });
+                    return true;
                 }
             }
         }
         
-        Log.e(TAG, "No conversation found between users: " + senderId + " and " + receiverId);
-        callback.onComplete(false);
+        return false;
     }
 
     private void sendMessageToConversation(String conversationId, String senderId, String messageContent, SendCallback callback) {

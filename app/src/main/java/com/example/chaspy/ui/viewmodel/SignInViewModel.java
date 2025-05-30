@@ -24,7 +24,7 @@ public class SignInViewModel extends AndroidViewModel {
     private SharedPreferencesManager preferencesManager;
     private MutableLiveData<Boolean> needEmailVerification;
     private MutableLiveData<Boolean> verificationEmailResent;
-    private String currentUsername; // Store current username
+    private String currentEmail; // Store current username
     private String currentPassword; // Store current password
 
     public SignInViewModel(@NonNull Application application) {
@@ -76,8 +76,8 @@ public class SignInViewModel extends AndroidViewModel {
     }
 
     // Get saved credentials
-    public String getSavedUsername() {
-        return preferencesManager.getUsername();
+    public String getSavedEmail() {
+        return preferencesManager.getEmail();
     }
 
     public String getSavedPassword() {
@@ -92,10 +92,10 @@ public class SignInViewModel extends AndroidViewModel {
         return preferencesManager.isRememberAccount();
     }
     
-    public String getPasswordForUsername(String username) {
+    public String getPasswordForEmail(String email) {
         List<AccountItem> accounts = preferencesManager.getSavedAccounts();
         for (AccountItem account : accounts) {
-            if (account.getUsername().equals(username)) {
+            if (account.getEmail().equals(email)) {
                 return account.getPassword();
             }
         }
@@ -103,14 +103,14 @@ public class SignInViewModel extends AndroidViewModel {
     }
 
     // Validate input fields (username and password)
-    public boolean validateInput(String username, String password) {
-        if (TextUtils.isEmpty(username)) {
-            errorMessage.setValue("Username cannot be empty.");
+    public boolean validateInput(String email, String password) {
+        if (TextUtils.isEmpty(email)) {
+            errorMessage.setValue("Email cannot be empty.");
             return false;
         }
         
-        if (username.length() < 3) {
-            errorMessage.setValue("Username must be at least 3 characters.");
+        if (email.length() < 3) {
+            errorMessage.setValue("Email must be at least 3 characters.");
             return false;
         }
         
@@ -122,13 +122,13 @@ public class SignInViewModel extends AndroidViewModel {
     }
 
     // Sign in the user
-    public void signInUser(String username, String password, boolean rememberAccount) {
-        if (validateInput(username, password)) {
-            // Store current username and password for potential verification email resending
-            currentUsername = username;
+    public void signInUser(String email, String password, boolean rememberAccount) {
+        if (validateInput(email, password)) {
+            // Store current email and password for potential verification email resending
+            currentEmail = email;
             currentPassword = password;
             
-            userRepository.signInUser(username + "@gmail.com", password).addOnCompleteListener(task -> {
+            userRepository.signInUser(email, password).addOnCompleteListener(task -> {
                 if (task.isSuccessful()) {
                     // Sign-in successful
                     FirebaseUser firebaseUser = task.getResult().getUser();
@@ -137,10 +137,10 @@ public class SignInViewModel extends AndroidViewModel {
                         firebaseUser.reload().addOnCompleteListener(reloadTask -> {
                             if (userRepository.isEmailVerified(firebaseUser)) {
                                 if (rememberAccount) {
-                                    preferencesManager.saveLoginCredentials(username, password, true);
+                                    preferencesManager.saveLoginCredentials(email, password, true);
                                 } else {
                                     // Just save login state without remember flag
-                                    preferencesManager.saveLoginCredentials(username, password, false);
+                                    preferencesManager.saveLoginCredentials(email, password, false);
                                 }
                                 isUserSignedIn.setValue(true);
                             } else {
@@ -160,8 +160,8 @@ public class SignInViewModel extends AndroidViewModel {
 
     // Method to resend verification email
     public void resendVerificationEmail() {
-        if (TextUtils.isEmpty(currentUsername)) {
-            errorMessage.setValue("Username cannot be empty.");
+        if (TextUtils.isEmpty(currentEmail)) {
+            errorMessage.setValue("Email cannot be empty.");
             return;
         }
         
@@ -171,9 +171,8 @@ public class SignInViewModel extends AndroidViewModel {
         }
         
         // Create email from username
-        String email = currentUsername + "@gmail.com";
-        
-        userRepository.resendVerificationEmail(email, currentPassword)
+
+        userRepository.resendVerificationEmail(currentEmail, currentPassword)
             .addOnCompleteListener(task -> {
                 if (task.isSuccessful()) {
                     verificationEmailResent.setValue(true);
@@ -189,12 +188,12 @@ public class SignInViewModel extends AndroidViewModel {
     }
 
     // Delete an account from saved accounts
-    public void deleteSavedAccount(String username) {
+    public void deleteSavedAccount(String email) {
         // Remove from SharedPreferences
-        preferencesManager.removeFromSavedAccounts(username);
+        preferencesManager.removeFromSavedAccounts(email);
         
         // If this was the last used account, clear last used account
-        if (preferencesManager.getLastUsedAccount().equals(username)) {
+        if (preferencesManager.getLastUsedAccount().equals(email)) {
             preferencesManager.clearLastUsedAccount();
         }
         
